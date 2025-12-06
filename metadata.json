@@ -1,0 +1,8 @@
+{
+  "name": "KADJOLO BASILE - Official Platform",
+  "description": "Plateforme officielle de marque personnelle incluant communauté, live streaming, marketplace de formation et blog.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

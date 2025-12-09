@@ -1,11 +1,13 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, Users, Video, ShoppingBag, BookOpen, 
-  Menu, X, LogOut, LayoutDashboard, Info, Mail, Youtube, Facebook, Instagram, Edit3
+  Menu, X, LogOut, LayoutDashboard, Info, Mail, Youtube, Facebook, Instagram, Edit3, Megaphone
 } from 'lucide-react';
 import { currentUser, siteConfig } from '../services/mockData';
+import Footer from './Footer';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -15,6 +17,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const location = useLocation();
+
+  // Hide footer on Creator Studio (SaaS Dashboard) to maximize workspace
+  const isCreatorStudio = location.pathname.startsWith('/creator-studio');
+  const showFooter = !isCreatorStudio;
 
   // Greeting Toast Logic
   const [showGreeting, setShowGreeting] = useState(false);
@@ -42,6 +48,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const navItems = [
     { label: 'Accueil', path: '/', icon: <Home size={20} /> },
+    { label: 'Actualités', path: '/news', icon: <Megaphone size={20} /> },
     { label: 'Communauté', path: '/community', icon: <Users size={20} /> },
     { label: 'Live Streaming', path: '/live', icon: <Video size={20} /> },
     { label: 'Formations', path: '/courses', icon: <ShoppingBag size={20} /> },
@@ -67,6 +74,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[100] bg-yellow-400 text-black px-4 py-2 rounded-lg font-bold shadow-lg flex items-center gap-2">
            <Edit3 size={16} /> MODE ÉDITION ADMIN ACTIF
         </div>
+      )}
+
+      {/* Mobile Sidebar Backdrop */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden backdrop-blur-sm"
+          onClick={() => setIsSidebarOpen(false)}
+        />
       )}
 
       {/* Mobile Header */}
@@ -162,10 +177,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 pt-16 lg:pt-0 overflow-y-auto h-screen scroll-smooth bg-gray-50">
-        <div className="max-w-7xl mx-auto p-4 md:p-8">
+      <main className="flex-1 pt-16 lg:pt-0 overflow-y-auto h-screen scroll-smooth bg-gray-50 flex flex-col">
+        {/* Page Content */}
+        <div className={`max-w-7xl mx-auto p-4 md:p-8 w-full flex-grow ${isCreatorStudio ? 'max-w-none p-0 md:p-0' : ''}`}>
           {children}
         </div>
+
+        {/* Footer */}
+        {showFooter && <Footer />}
       </main>
     </div>
   );

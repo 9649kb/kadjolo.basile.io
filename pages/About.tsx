@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { ArrowRight, Award, Target, Users, Camera, Save, X, Link as LinkIcon, Upload } from 'lucide-react';
+import { ArrowRight, Award, Target, Users, Camera, Save, X, Link as LinkIcon, Upload, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { siteConfig } from '../services/mockData';
 
@@ -141,6 +141,7 @@ const About: React.FC = () => {
         <div className="absolute top-0 right-0 w-32 h-32 bg-brand-blue/5 rounded-full blur-3xl"></div>
         <h2 className="text-2xl font-bold text-brand-black mb-6 font-serif relative z-10">Mon Histoire</h2>
         <div className="space-y-4 text-gray-600 leading-relaxed text-lg relative z-10">
+          <BookOpen className="w-8 h-8 text-brand-blue mb-2" />
           <p>
             Tout a commencé avec une vision simple : <strong>le potentiel humain est illimité</strong>, mais souvent inexploité. 
             Après des années d'expérience dans le monde des affaires et de nombreuses épreuves surmontées, j'ai décidé de consacrer ma vie à aider les autres à bâtir leur propre empire.

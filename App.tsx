@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -5,10 +7,14 @@ import Home from './pages/Home';
 import Community from './pages/Community';
 import LiveStream from './pages/LiveStream';
 import Marketplace from './pages/Marketplace';
+import CreatorStudio from './pages/CreatorStudio';
 import Blog from './pages/Blog';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import YouTubePage from './pages/YouTubePage';
+import ProductLanding from './pages/ProductLanding';
+import LegalPage from './pages/LegalPage';
+import News from './pages/News';
 import { MessageSquare, X } from 'lucide-react';
 import { generateAIResponse } from './services/geminiService';
 
@@ -102,14 +108,31 @@ const App: React.FC = () => {
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/news" element={<News />} />
           <Route path="/community" element={<Community />} />
           <Route path="/live" element={<LiveStream />} />
           <Route path="/courses" element={<Marketplace />} />
           <Route path="/marketplace" element={<Marketplace />} />
+          
+          {/* Landing Page for Ads - Clean URL */}
+          <Route path="/product/:id" element={<ProductLanding />} />
+          <Route path="/courses/:id" element={<ProductLanding />} />
+          
+          {/* SaaS Interface */}
+          <Route path="/creator-studio" element={<CreatorStudio />} />
+          
+          {/* Blog & Static */}
           <Route path="/blog" element={<Blog />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/youtube" element={<YouTubePage />} />
+          
+          {/* Legal Pages for Ads Compliance */}
+          <Route path="/privacy" element={<LegalPage type="privacy" />} />
+          <Route path="/terms" element={<LegalPage type="terms" />} />
+          <Route path="/legal" element={<LegalPage type="legal" />} />
+          <Route path="/refund" element={<LegalPage type="refund" />} />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Layout>

@@ -37,3 +37,37 @@ export const generateAIResponse = async (prompt: string): Promise<string> => {
     return "Une erreur est survenue lors de la communication avec l'assistant intelligent.";
   }
 };
+
+export const getAISuggestions = async (text: string, type: 'title' | 'description'): Promise<string[]> => {
+  try {
+    const apiKey = getApiKey();
+    if (!apiKey || apiKey === 'DEMO_KEY') {
+      return [
+        "Suggestion IA simulée 1 : " + text + " (Premium)",
+        "Suggestion IA simulée 2 : Maîtrisez " + text,
+        "Suggestion IA simulée 3 : Le Guide Ultime : " + text
+      ];
+    }
+
+    const prompt = type === 'title' 
+      ? `Tu es un expert en copywriting et marketing digital. Propose 3 variantes de titres accrocheurs, professionnels et vendeurs pour une formation dont le titre provisoire est : "${text}". Réponds UNIQUEMENT par une liste brute séparée par des sauts de ligne, sans numérotation ni texte introductif.`
+      : `Tu es un expert en vente. Améliore cette description de formation pour la rendre persuasive, claire et structurée (avec des puces si nécessaire). Le texte actuel est : "${text}". Propose 3 versions différentes (une courte punchy, une orientée bénéfices, une détaillée). Sépare les versions par le symbole "|||".`;
+
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+    });
+
+    const rawText = response.text || "";
+    
+    if (type === 'title') {
+      return rawText.split('\n').filter(line => line.trim().length > 0).slice(0, 3);
+    } else {
+      return rawText.split('|||').map(s => s.trim()).filter(s => s.length > 0).slice(0, 3);
+    }
+
+  } catch (error) {
+    console.error("Gemini Suggestion Error:", error);
+    return [];
+  }
+};

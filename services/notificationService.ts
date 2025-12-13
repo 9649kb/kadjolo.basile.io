@@ -47,3 +47,32 @@ export const notifyCommentReply = async (originalCommenterName: string, replierN
     `Bonjour ${originalCommenterName}, ${replierName} a répondu à votre commentaire sur le post "${postTitle}".`
   );
 };
+
+export const notifyAdminPayoutRequest = async (vendorName: string, amount: number, method: string) => {
+  return sendEmailNotification(
+    `💰 Demande de retrait : ${vendorName}`,
+    ['admin@kadjolo.com', 'finance@kadjolo.com'], // Emails du fondateur/admin
+    `ALERTE FINANCE :\n\nLe vendeur ${vendorName} a demandé un retrait de ${amount.toLocaleString()} FCFA.\nMoyen de paiement souhaité : ${method}.\n\nConnectez-vous au tableau de bord Admin > Finance pour valider ou refuser.`
+  );
+};
+
+// NEW: Reward Claim Notification
+export const notifyRewardClaim = async (vendorName: string, rewardTitle: string, rewardValue: string | number) => {
+  return sendEmailNotification(
+    `🎁 RÉCLAMATION CADEAU : ${vendorName}`,
+    ['admin@kadjolo.com'],
+    `ACTION REQUISE :\n\nLe vendeur "${vendorName}" a débloqué le palier "${rewardTitle}".\nIl réclame son gain : ${rewardValue}.\n\nVeuillez vérifier son éligibilité dans le Dashboard Admin > Récompenses et procéder à l'envoi.`
+  );
+};
+
+// NEW: Newsletter Subscription
+export const subscribeToNewsletter = async (email: string) => {
+  console.log(`[NEWSLETTER] New subscriber: ${email}`);
+  // In a real app, this would perform a POST request to Mailchimp/ConvertKit/Systeme.io
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Simulate success
+      resolve({ success: true, message: "Inscription confirmée" });
+    }, 1200);
+  });
+};

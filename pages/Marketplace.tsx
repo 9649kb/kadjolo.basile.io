@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { ShoppingCart, Star, Video, Book, Search, Package, CheckCircle, Award, X, BadgeCheck, ExternalLink, ArrowRight, Clock, FileText, Globe, Users, Share2, Copy, Store } from 'lucide-react';
+import { ShoppingCart, Star, Video, Book, Search, Package, CheckCircle, Award, X, BadgeCheck, ExternalLink, ArrowRight, Clock, FileText, Globe, Users, Share2, Copy, Store, Layers } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { courses as initialCourses, vendorProfiles as initialProfiles, currentUser } from '../services/mockData';
 import { Course, VendorProfile, Review } from '../types';
@@ -146,13 +147,12 @@ const Marketplace: React.FC = () => {
                 {product.type === 'ebook' ? 'E-Book' : 'Formation'}
               </div>
               
-              <button 
-                onClick={(e) => handleShareProduct(e, product)}
-                className="absolute top-3 right-3 bg-white text-brand-black p-2 rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-brand-blue hover:text-white z-10"
-                title="Partager"
-              >
-                <Share2 size={16} />
-              </button>
+              {/* Hosted Content Badge */}
+              {product.modules && product.modules.length > 0 && (
+                <div className="absolute top-3 right-3 bg-brand-blue/90 backdrop-blur text-white px-2 py-1 rounded text-xs font-bold shadow-lg flex items-center gap-1">
+                  <Layers size={10} /> {product.modules.length} Modules
+                </div>
+              )}
 
               {product.promoPrice && (
                 <div className="absolute bottom-3 right-3 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
@@ -161,7 +161,17 @@ const Marketplace: React.FC = () => {
               )}
             </div>
             <div className="p-5 flex-1 flex flex-col">
-              <h3 className="font-bold text-lg text-brand-black mb-1 leading-snug group-hover:text-brand-blue transition-colors">{product.title}</h3>
+              {/* Category & Rating */}
+              <div className="flex justify-between items-center mb-2">
+                 <span className="text-xs font-bold text-brand-blue uppercase tracking-wider">{product.category}</span>
+                 <div className="flex items-center gap-1 bg-yellow-50 px-2 py-0.5 rounded text-yellow-600 text-xs font-bold">
+                    <Star size={12} fill="currentColor" />
+                    <span>{product.rating > 0 ? product.rating : 'N/A'}</span>
+                    <span className="text-gray-400 font-normal">({product.reviews?.length || 0} avis)</span>
+                 </div>
+              </div>
+
+              <h3 className="font-bold text-lg text-brand-black mb-1 leading-snug group-hover:text-brand-blue transition-colors line-clamp-2" title={product.title}>{product.title}</h3>
               
               <div className="flex justify-between items-center mb-3">
                 <button 
@@ -169,23 +179,14 @@ const Marketplace: React.FC = () => {
                     e.stopPropagation();
                     if (vendor) setSelectedVendor(vendor);
                   }}
-                  className="text-sm text-gray-500 hover:text-brand-blue hover:underline text-left flex items-center gap-1"
+                  className="text-sm text-gray-500 hover:text-brand-blue hover:underline text-left flex items-center gap-1 truncate"
                 >
-                  Par {product.instructor}
-                  {vendor?.isVerified && <BadgeCheck size={14} className="text-blue-500" fill="currentColor" color="white" />}
+                  <span className="truncate">Par {product.instructor}</span>
+                  {vendor?.isVerified && <BadgeCheck size={14} className="text-blue-500 shrink-0" fill="currentColor" color="white" />}
                 </button>
-                {product.instructorId && (
-                  <button 
-                    onClick={(e) => handleShareShop(e, product.instructorId!)}
-                    className="text-gray-400 hover:text-brand-blue"
-                    title="Partager la boutique"
-                  >
-                    <Store size={14} />
-                  </button>
-                )}
               </div>
       
-              <p className="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">{product.description}</p>
+              <p className="text-gray-600 text-sm line-clamp-2 mb-4 flex-1">{product.shortDescription || product.description}</p>
               
               <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-auto">
                 <div className="flex flex-col">
@@ -234,7 +235,7 @@ const Marketplace: React.FC = () => {
         />
       )}
 
-      {/* --- PRODUCT DETAIL MODAL (LANDING PAGE STYLE) --- */}
+      {/* --- PRODUCT DETAIL MODAL --- */}
       {showProductDetail && selectedProduct && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-5xl max-h-[95vh] overflow-y-auto shadow-2xl relative flex flex-col md:flex-row overflow-hidden">
@@ -270,12 +271,6 @@ const Marketplace: React.FC = () => {
                  <p className="text-center text-xs text-gray-400 mt-4 flex items-center justify-center gap-1">
                    <CheckCircle size={12} /> Garantie satisfait ou remboursé 30j
                  </p>
-                 
-                 <div className="mt-6 flex gap-2 justify-center">
-                   {['Visa', 'Mastercard', 'PayPal', 'T-Money', 'Wave'].map(m => (
-                     <div key={m} className="bg-gray-100 px-2 py-1 rounded text-[10px] text-gray-500">{m}</div>
-                   ))}
-                 </div>
               </div>
             </div>
 
@@ -284,12 +279,6 @@ const Marketplace: React.FC = () => {
               <div className="mb-8">
                 <div className="flex justify-between items-start">
                    <span className="text-brand-blue font-bold text-sm tracking-wider uppercase mb-2 block">{selectedProduct.category}</span>
-                   <button 
-                     onClick={(e) => handleShareProduct(e, selectedProduct)}
-                     className="flex items-center gap-2 text-sm font-bold text-brand-blue bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors"
-                   >
-                     <Share2 size={16} /> Partager le lien
-                   </button>
                 </div>
                 
                 <h2 className="text-3xl font-bold text-brand-black mb-4 leading-tight">{selectedProduct.title}</h2>
@@ -299,30 +288,26 @@ const Marketplace: React.FC = () => {
                   {selectedProduct.hasCertificate && <div className="flex items-center gap-1 text-green-600"><Award size={16} /> Certificat inclus</div>}
                 </div>
                 
-                <p className="text-gray-600 leading-relaxed text-lg mb-6">{selectedProduct.description}</p>
-                
-                <h3 className="font-bold text-lg mb-4">Ce que vous allez apprendre</h3>
-                <ul className="grid grid-cols-1 gap-2 mb-8">
-                  <li className="flex items-start gap-2"><CheckCircle size={18} className="text-green-500 mt-1 flex-shrink-0" /> <span>Maîtriser les fondamentaux rapidement</span></li>
-                  <li className="flex items-start gap-2"><CheckCircle size={18} className="text-green-500 mt-1 flex-shrink-0" /> <span>Accès à vie aux mises à jour</span></li>
-                  <li className="flex items-start gap-2"><CheckCircle size={18} className="text-green-500 mt-1 flex-shrink-0" /> <span>Support communautaire VIP</span></li>
-                </ul>
+                <p className="text-gray-600 leading-relaxed text-lg mb-6 whitespace-pre-line">{selectedProduct.description}</p>
               </div>
 
-              {selectedProduct.type === 'course' && selectedProduct.modules && (
+              {selectedProduct.type === 'course' && selectedProduct.modules && selectedProduct.modules.length > 0 && (
                  <div className="mb-8">
-                   <h3 className="font-bold text-lg border-b border-gray-100 pb-2 mb-4">Programme de la formation</h3>
+                   <h3 className="font-bold text-lg border-b border-gray-100 pb-2 mb-4 flex justify-between items-center">
+                     Programme de la formation
+                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded font-bold">{selectedProduct.modules.length} Modules</span>
+                   </h3>
                    <div className="space-y-3">
                       {selectedProduct.modules.map((mod, idx) => (
                         <div key={mod.id} className="border border-gray-100 rounded-lg overflow-hidden">
-                           <div className="bg-gray-50 p-4 font-bold text-gray-800 flex justify-between items-center cursor-pointer hover:bg-gray-100 transition-colors">
+                           <div className="bg-gray-50 p-4 font-bold text-gray-800 flex justify-between items-center">
                              <span>Module {idx + 1} : {mod.title}</span>
                              <span className="text-gray-400 font-normal text-sm">{mod.lessons.length} leçons</span>
                            </div>
                            <div className="bg-white p-4 space-y-2">
                              {mod.lessons.map(l => (
                                <div key={l.id} className="flex items-center gap-3 text-sm text-gray-600">
-                                 {l.type === 'video' ? <Video size={14} /> : l.type === 'pdf' ? <FileText size={14} /> : <Globe size={14} />}
+                                 {l.type === 'video' ? <Video size={14} className="text-brand-blue" /> : l.type === 'pdf' ? <FileText size={14} className="text-red-500" /> : <Book size={14} />}
                                  <span className="flex-1">{l.title}</span>
                                  {l.duration && <span className="text-xs text-gray-400">{l.duration}</span>}
                                </div>
@@ -333,43 +318,6 @@ const Marketplace: React.FC = () => {
                    </div>
                  </div>
               )}
-
-              {/* REVIEWS SECTION */}
-              <div className="mt-8 border-t border-gray-100 pt-8">
-                 <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
-                   Avis des étudiants 
-                   <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">{selectedProduct.reviews?.length || 0}</span>
-                 </h3>
-                 
-                 <div className="space-y-6">
-                   {selectedProduct.reviews && selectedProduct.reviews.length > 0 ? (
-                     selectedProduct.reviews.map(review => (
-                       <div key={review.id} className="bg-gray-50 p-4 rounded-xl">
-                         <div className="flex justify-between items-start mb-2">
-                           <div className="flex items-center gap-2">
-                             <img src={review.userAvatar} className="w-8 h-8 rounded-full" alt="" />
-                             <span className="font-bold text-sm">{review.userName}</span>
-                           </div>
-                           <div className="flex text-yellow-400">
-                             {[...Array(5)].map((_, i) => (
-                               <Star key={i} size={12} fill={i < review.rating ? "currentColor" : "none"} />
-                             ))}
-                           </div>
-                         </div>
-                         <p className="text-gray-600 text-sm mb-3">{review.comment}</p>
-                         {review.reply && (
-                           <div className="pl-4 border-l-2 border-brand-blue ml-2">
-                             <p className="text-xs font-bold text-brand-blue mb-1">Réponse du formateur</p>
-                             <p className="text-xs text-gray-500">{review.reply}</p>
-                           </div>
-                         )}
-                       </div>
-                     ))
-                   ) : (
-                     <p className="text-gray-400 italic">Aucun avis pour le moment.</p>
-                   )}
-                 </div>
-              </div>
             </div>
           </div>
         </div>

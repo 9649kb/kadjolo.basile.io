@@ -1,91 +1,71 @@
 
-
 export interface User {
   id: string;
   name: string;
   avatar: string;
-  role: 'student' | 'creator' | 'admin';
+  role: 'student' | 'creator' | 'admin' | 'affiliate';
   email: string;
   isBanned?: boolean;
-  isFounder?: boolean; // Only true for you
-  permissions?: AdminPermission[]; // List of allowed tasks
+  isFounder?: boolean; 
+  permissions?: AdminPermission[]; 
+  balance?: number; 
+  affiliateCode?: string;
+  joinedAt?: string;
+  twoFactorEnabled?: boolean; 
 }
 
 export type AdminPermission = 
-  | 'manage_vendors'   // Can block/unblock vendors
-  | 'manage_team'      // Can add/remove other admins
-  | 'view_finance'     // Can see global revenue
-  | 'moderate_content' // Can delete courses/comments
-  | 'manage_live';     // Can stop live streams
+  | 'manage_users'     
+  | 'manage_finance'   
+  | 'manage_content'   
+  | 'manage_team'      
+  | 'manage_settings'; 
 
-export interface Post {
+export interface PaymentMethodConfig {
   id: string;
-  author: User;
-  content: string;
-  image?: string;
-  audioUrl?: string; // For voice messages
-  attachmentUrl?: string; // For files
-  attachmentType?: 'image' | 'file' | 'audio';
-  likes: number;
-  comments: number;
-  timestamp: string;
-  likedByMe?: boolean;
+  name: string; 
+  type: 'mobile_money' | 'card' | 'crypto' | 'bank' | 'paypal' | 'manual';
+  integrationMode: 'manual' | 'api_simulated' | 'redirect_link'; 
+  
+  logoUrl?: string; 
+  color?: string; 
+  textColor?: string;
+  
+  isActive: boolean;
+  instructions?: string; 
+  requiresProof?: boolean; 
+  
+  redirectUrl?: string; 
+  
+  // Secure Credentials (usually not sent to front-end in full, but needed for admin edit)
+  apiConfig?: {
+    publicKey?: string;
+    secretKey?: string; // Admin only
+    merchantId?: string;
+    environment?: 'sandbox' | 'production';
+    webhookSecret?: string; // Admin only
+  };
+  
+  providerCode?: string; 
 }
 
-export type PayoutStatus = 'pending' | 'processing' | 'paid' | 'rejected';
-
-export interface PayoutRequest {
+// NEW: Reward Rule Interface
+export interface RewardRule {
   id: string;
-  vendorId: string;
-  vendorName: string;
-  amount: number;
-  method: 'bank' | 'mobile_money' | 'crypto' | 'paypal';
-  details: string; // Phone number or IBAN
-  requestDate: string;
-  processedDate?: string;
-  status: PayoutStatus;
-  adminNote?: string;
-}
-
-export interface VendorThemeConfig {
-  primaryColor: string; // Hex code
-  style: 'modern' | 'minimalist' | 'bold';
-  bannerUrl?: string;
-}
-
-export interface VendorPaymentConfig {
-  mobileMoney: {
-    tmoney?: string;
-    flooz?: string;
-    mtn?: string;
-    orange?: string;
-    moov?: string;
-    wave?: string;
-    airtel?: string;
-  };
-  international: {
-    paypalEmail?: string;
-    stripePublicKey?: string;
-    payoneerEmail?: string;
-  };
-  crypto: {
-    btcAddress?: string;
-    usdtAddress?: string; // TRC20 usually
-    enabled: boolean;
-  };
-  bank: {
-    iban?: string;
-    swift?: string;
-    bankName?: string;
-    accountName?: string;
-    enabled: boolean;
-  };
-  customLink?: string; // For external payment links
+  name: string;
+  description: string;
+  type: 'revenue' | 'sales_count'; // Condition type
+  threshold: number; // The value to reach (e.g. 1,000,000 FCFA)
+  rewardType: 'bonus_cash' | 'gift_physical' | 'badge_vip';
+  rewardValue: string | number; // e.g., "50000" (cash) or "iPhone 15" (gift)
+  icon: string;
+  color: string;
 }
 
 export interface VendorProfile {
   id: string;
   userId: string;
+  email?: string; 
   shopName: string;
   description: string;
   logoUrl: string;
@@ -93,71 +73,53 @@ export interface VendorProfile {
   isVerified: boolean;
   isTopSeller?: boolean;
   joinedDate: string;
-  status: 'active' | 'suspended' | 'blocked'; // Added blocked
-  commissionRate: number; // Admin control (percentage, default 10)
-  canStream?: boolean; // Admin control
+  status: 'active' | 'suspended' | 'blocked'; 
+  commissionRate: number; 
+  canStream?: boolean; 
   
-  // Finance
-  walletBalance: number; // Available for withdrawal
-  totalRevenue: number; // Gross revenue
-  totalCommissionPaid: number; // Platform fees paid
+  walletBalance: number; 
+  pendingBalance: number; 
+  totalRevenue: number; 
+  totalCommissionPaid: number; 
   totalSales?: number;
   kycStatus: 'pending' | 'verified' | 'rejected';
+  withdrawalSettings?: VendorWithdrawalSettings;
   
-  paymentConfig?: VendorPaymentConfig; 
   facebookPixelId?: string; 
-  themeConfig?: VendorThemeConfig; // NEW: Shop design
+  themeConfig?: VendorThemeConfig; 
+  activityLogs?: ActivityLog[];
+  
+  // NEW: Track rewards received
+  receivedRewards?: string[]; // IDs of rewards already claimed
 }
 
-export interface Review {
-  id: string;
-  userId: string;
-  userName: string;
-  userAvatar: string;
-  rating: number;
-  comment: string;
-  date: string;
-  reply?: string; // Response from the seller
+export interface VendorThemeConfig {
+  primaryColor: string; 
+  style: 'modern' | 'minimalist' | 'bold' | 'business' | 'creative';
+  font?: 'sans' | 'serif' | 'mono';
+  bannerUrl?: string;
 }
 
-export interface Testimonial {
-  id: string;
-  name: string;
-  role: string;
-  content: string;
-  avatar: string;
-  rating: number;
-}
-
-// --- NEW COURSE STRUCTURE TYPES ---
-
-export interface Lesson {
-  id: string;
-  title: string;
-  type: 'video' | 'audio' | 'pdf' | 'link' | 'zip'; // Added zip
-  contentUrl: string;
-  isExternal?: boolean; // True if YouTube/Vimeo/Drive
-  duration?: string;
-  isPreview?: boolean;
-  hostingType?: 'internal' | 'external'; // Explicit hosting choice
-}
-
-export interface Module {
-  id: string;
-  title: string;
-  lessons: Lesson[];
+export interface VendorWithdrawalSettings {
+  mobileMoneyNumber?: string;
+  mobileMoneyProvider?: 'TMoney' | 'Flooz' | 'Moov';
+  paypalEmail?: string;
+  bankDetails?: string;
+  stripeConnectId?: string;
+  autoWithdrawalThreshold?: number; 
 }
 
 export interface Course {
   id: string;
   title: string;
+  subtitle?: string; // NEW
   instructor: string;
   instructorId?: string; 
   price: number;
-  promoPrice?: number; // New: Promo pricing
-  currency?: 'EUR' | 'USD' | 'XOF'; // New: Currency
+  promoPrice?: number;
+  currency?: 'EUR' | 'USD' | 'XOF';
   image: string;
-  additionalImages?: string[]; // Multiple covers
+  additionalImages?: string[];
   category: string;
   subCategory?: string;
   rating: number;
@@ -165,20 +127,48 @@ export interface Course {
   isPremium: boolean;
   type: 'course' | 'ebook'; 
   description?: string; 
-  shortDescription?: string;
+  shortDescription?: string; 
   reviews?: Review[];
-  // Legacy fields
+  
+  // Content Logic
   contentUrl?: string; 
-  fileName?: string; 
-  // New deep structure
-  modules?: Module[];
+  modules?: Module[]; 
   level?: 'beginner' | 'intermediate' | 'expert';
   hasCertificate?: boolean;
   skills?: string[];
-  status: 'draft' | 'published' | 'deleted'; // Direct publishing
-  hostingMode: 'internal' | 'external'; // New
+  tags?: string[];
+  language?: string; 
+  
+  // Admin/System
+  status: 'draft' | 'published' | 'deleted' | 'banned' | 'private' | 'scheduled' | 'archived'; 
+  visibility: 'public' | 'private' | 'unlisted'; // NEW
+  scheduledDate?: string; 
+  
+  // Hosting
+  hostingMode: 'internal' | 'external'; 
+  externalSalesPageUrl?: string; 
+  
+  // Media Configuration (NEW)
+  mediaConfig?: {
+    videoUrl?: string;
+    videoType?: 'upload' | 'youtube' | 'vimeo' | 'external_link';
+    pdfUrl?: string;
+    previewImage?: string;
+  };
+
+  // Versioning (NEW)
+  version?: number;
+  lastModified?: string;
+
   createdAt: string;
-  // NEW: Traffic Analytics for Ads
+  updatedAt?: string;
+  
+  seo?: SEOConfig; 
+  seoScore?: number; 
+  
+  affiliateEnabled?: boolean;
+  affiliateCommission?: number; 
+
   stats?: {
     views: number;
     clicks: number;
@@ -190,16 +180,99 @@ export interface Course {
 export interface Sale {
   id: string;
   studentName: string;
+  studentEmail?: string; // NEW
   courseTitle: string;
+  courseId?: string; // NEW
+  vendorId?: string; // ADDED for filtering
   amount: number;
-  platformFee: number; // 10%
-  netEarnings: number; // 90%
+  platformFee: number; 
+  netEarnings: number; 
   currency: string;
   date: string;
   status: 'completed' | 'pending' | 'refunded' | 'verifying'; 
   paymentMethod: string;
-  paymentProvider?: string; // e.g., 'Binance', 'TMoney'
+  paymentProvider?: string; 
   transactionId?: string;
+  proofUrl?: string; 
+  source?: string; 
+}
+
+export interface PayoutRequest {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  amount: number;
+  method: PaymentMethodType;
+  details: string; 
+  bankDetails?: string; 
+  mobileMoneyNumber?: string; 
+  requestDate: string;
+  processedDate?: string;
+  status: PayoutStatus;
+  adminNote?: string; 
+  transactionReference?: string; 
+  feeDeducted: number; 
+}
+
+// ... Keep existing interfaces ...
+export interface Lesson {
+  id: string;
+  title: string;
+  type: 'video' | 'audio' | 'pdf' | 'link' | 'zip' | 'quiz';
+  contentUrl: string;
+  isExternal?: boolean;
+  duration?: string;
+  isPreview?: boolean;
+  hostingType?: 'internal' | 'external';
+  fileSize?: string;
+}
+
+export interface Module {
+  id: string;
+  title: string;
+  lessons: Lesson[];
+}
+
+export interface SEOConfig {
+  metaTitle: string;
+  metaDescription: string;
+  ogImage?: string;
+  keywords?: string[];
+}
+
+export interface Review {
+  id: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  rating: number;
+  comment: string;
+  date: string;
+  reply?: string;
+}
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  content: string;
+  avatar: string;
+  rating: number;
+  used?: boolean;
+}
+
+export interface Transaction {
+  id: string;
+  type: 'sale' | 'payout' | 'refund' | 'commission_fee';
+  amount: number; 
+  netAmount?: number; 
+  feeAmount?: number; 
+  status: 'completed' | 'pending' | 'failed';
+  date: string;
+  description: string;
+  vendorId: string;
+  paymentMethod?: string;
+  referenceId?: string; 
 }
 
 export interface SupportTicket {
@@ -219,7 +292,7 @@ export interface ChatMessage {
   avatar?: string;
   text: string;
   timestamp: string;
-  isSender?: boolean; // For local user logic
+  isSender?: boolean;
   attachment?: { type: 'image' | 'file' | 'audio'; url: string; name: string };
   isModerator?: boolean;
 }
@@ -227,20 +300,27 @@ export interface ChatMessage {
 export interface CreatorStats {
   totalSales: number;
   revenue: number;
+  commissionPaid: number;
   students: number;
   monthlyGrowth: number;
   conversionRate: number;
-  commissionPaid: number;
-  totalClicks?: number; // Added for Affiliate
+  totalClicks?: number; 
 }
 
 export interface AdminGlobalStats {
-  totalPlatformRevenue: number; // Only the commissions
-  totalSalesVolume: number; // GMV
+  totalPlatformRevenue: number;
+  totalSalesVolume: number;
   totalVendors: number;
   totalCourses: number;
   activeStudents: number;
-  pendingPayouts: number; // New
+  pendingPayouts: number;
+}
+
+export interface AdminReport {
+  date: string;
+  sales: number;
+  commission: number;
+  payouts: number;
 }
 
 export interface Notification {
@@ -251,8 +331,6 @@ export interface Notification {
   read: boolean;
 }
 
-// --- NEW LIVE STREAMING TYPES ---
-
 export type StreamQuality = '1080p' | '720p' | '480p' | '360p';
 export type StreamSource = 'webcam' | 'external';
 
@@ -260,14 +338,13 @@ export interface LiveConfig {
   title: string;
   description: string;
   thumbnail?: string;
-  price: number; // 0 for free
+  price: number; 
   isPremium: boolean;
   replayPolicy: 'public' | 'private' | 'students_only';
   quality: StreamQuality;
   chatEnabled: boolean;
-  // Professional Options
   streamSource: StreamSource;
-  externalStreamUrl?: string; // YouTube, Twitch, RTMP link
+  externalStreamUrl?: string;
   guestInviteEnabled?: boolean;
   guestLink?: string;
 }
@@ -284,7 +361,7 @@ export interface LiveSession {
   startedAt?: string;
   endedAt?: string;
   revenue?: number;
-  activeProductId?: string; // New: For Live Shopping/Pinning
+  activeProductId?: string;
 }
 
 export interface YouTubeVideo {
@@ -296,20 +373,20 @@ export interface YouTubeVideo {
   views?: string;
 }
 
-// --- NEW NEWS / ACTUALITÉS TYPES ---
-export type NewsType = 'success_story' | 'announcement' | 'promotion' | 'new_feature' | 'info';
+export type NewsType = 'success_story' | 'announcement' | 'promotion' | 'new_feature' | 'info' | 'vendor_news' | 'press_release';
 
 export interface NewsItem {
   id: string;
   title: string;
   content: string;
   type: NewsType;
-  mediaUrl?: string; // Image or Video URL
+  mediaUrl?: string;
   date: string;
-  isPinned?: boolean; // To keep at top
+  isPinned?: boolean;
+  source?: string;
+  externalLink?: string;
 }
 
-// --- NEW AFFILIATE TYPES ---
 export interface AffiliateLink {
   id: string;
   productId: string;
@@ -325,8 +402,96 @@ export interface MarketingAsset {
   id: string;
   type: 'banner' | 'video' | 'text' | 'story';
   title: string;
-  url: string; // Image url or video url
-  content?: string; // For text scripts
+  url: string;
+  content?: string;
   format?: '1080x1080' | '9:16' | 'Text';
   downloadCount: number;
+}
+
+export interface AdminPaymentAccount {
+  id: string;
+  methodName: string; 
+  details: string; 
+  isActive: boolean;
+  type: 'crypto' | 'bank' | 'mobile' | 'card' | 'other';
+}
+
+export interface SiteSettings {
+  siteName: string;
+  commissionRate: number; 
+  currency: 'XOF' | 'EUR' | 'USD';
+  maintenanceMode: boolean;
+  allowNewRegistrations: boolean;
+  autoApproveCourses: boolean;
+  supportEmail: string;
+  adminPaymentAccounts?: AdminPaymentAccount[]; 
+}
+
+export interface Post {
+  id: string;
+  author: User;
+  content: string;
+  image?: string;
+  audioUrl?: string;
+  attachmentUrl?: string;
+  attachmentType?: 'image' | 'file' | 'audio';
+  likes: number;
+  comments: number;
+  timestamp: string;
+  likedByMe?: boolean;
+}
+
+export interface Coupon {
+  id: string;
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  vendorId: string;
+  maxUses?: number;
+  usedCount: number;
+  expiresAt?: string;
+  isActive: boolean;
+}
+
+export type PayoutStatus = 'pending' | 'processing' | 'paid' | 'rejected';
+export type PaymentMethodType = 'mobile_money' | 'card' | 'crypto' | 'bank' | 'paypal' | 'manual';
+export type PaymentIntegrationMode = 'manual' | 'api_simulated' | 'redirect_link';
+
+export interface CommissionRecord {
+  id: string;
+  saleId: string;
+  courseTitle: string;
+  vendorId: string;
+  vendorName: string;
+  totalAmount: number;
+  adminAmount: number; 
+  vendorAmount: number; 
+  rateApplied: number;
+  date: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  action: string;
+  details: string;
+  timestamp: string;
+  ip?: string;
+}
+
+export interface AdminLog {
+  id: string;
+  adminName: string;
+  action: string;
+  targetId?: string;
+  details: string;
+  timestamp: string;
+  ip: string;
+}
+
+export interface SystemLog {
+  id: string;
+  level: 'info' | 'warning' | 'error';
+  message: string;
+  user: string;
+  timestamp: string;
 }

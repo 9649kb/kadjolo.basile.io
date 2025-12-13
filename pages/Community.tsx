@@ -1,9 +1,11 @@
 
 import React, { useState, useRef } from 'react';
-import { Heart, MessageCircle, Share2, Send, Image as ImageIcon, Mic, Paperclip, X, Play, Pause, FileText, Bell, CornerDownRight } from 'lucide-react';
-import { posts as initialPosts, currentUser } from '../services/mockData';
+import { Heart, MessageCircle, Share2, Send, Image as ImageIcon, Mic, Paperclip, X, Play, Pause, FileText, Bell, CornerDownRight, LogIn } from 'lucide-react';
+import { posts as initialPosts } from '../services/mockData';
 import { Post } from '../types';
 import { notifyCommunity, notifyCommentReply } from '../services/notificationService';
+import { useUser } from '../contexts/UserContext';
+import { Link } from 'react-router-dom';
 
 // Define a simple structure for local comments handling
 interface Comment {
@@ -16,6 +18,7 @@ interface Comment {
 }
 
 const Community: React.FC = () => {
+  const { user: currentUser } = useUser();
   const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [newPostContent, setNewPostContent] = useState('');
   const [isRecording, setIsRecording] = useState(false);
@@ -39,7 +42,7 @@ const Community: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handlePost = async () => {
-    if (!newPostContent.trim() && !attachment) return;
+    if (!currentUser || (!newPostContent.trim() && !attachment)) return;
     
     setIsNotifying(true);
 
@@ -67,6 +70,7 @@ const Community: React.FC = () => {
   };
 
   const handleLike = (postId: string) => {
+    if (!currentUser) return; // Optionally prompt login
     setPosts(posts.map(post => {
       if (post.id === postId) {
         return {
@@ -88,7 +92,7 @@ const Community: React.FC = () => {
   };
 
   const handleSendComment = async (postId: string) => {
-    if (!commentInput.trim()) return;
+    if (!currentUser || !commentInput.trim()) return;
 
     const newComment: Comment = {
       id: Date.now().toString(),
@@ -164,68 +168,81 @@ const Community: React.FC = () => {
         )}
       </div>
 
-      {/* Create Post */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
-        <div className="flex gap-4">
-          <img src={currentUser.avatar} alt="Me" className="w-10 h-10 rounded-full object-cover ring-2 ring-brand-blue/10" />
-          <div className="flex-1">
-            <textarea
-              value={newPostContent}
-              onChange={(e) => setNewPostContent(e.target.value)}
-              placeholder="Partagez vos réussites, fichiers ou audio... (Une notification sera envoyée)"
-              className="w-full bg-brand-gray rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 resize-none h-24 text-sm text-brand-black"
-            />
-            
-            {/* Attachment Preview */}
-            {attachment && (
-              <div className="mt-2 bg-gray-50 p-2 rounded flex items-center justify-between border border-gray-200">
-                <div className="flex items-center gap-2 text-sm text-gray-600">
-                  {attachment.type === 'image' && <ImageIcon size={16} />}
-                  {attachment.type === 'file' && <Paperclip size={16} />}
-                  {attachment.type === 'audio' && <Mic size={16} />}
-                  <span className="truncate max-w-xs">{attachment.name || 'Fichier joint'}</span>
+      {/* Create Post - Only if Logged In */}
+      {currentUser ? (
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 relative">
+          <div className="flex gap-4">
+            <img src={currentUser.avatar} alt="Me" className="w-10 h-10 rounded-full object-cover ring-2 ring-brand-blue/10" />
+            <div className="flex-1">
+              <textarea
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                placeholder="Partagez vos réussites, fichiers ou audio... (Une notification sera envoyée)"
+                className="w-full bg-brand-gray rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 resize-none h-24 text-sm text-brand-black"
+              />
+              
+              {/* Attachment Preview */}
+              {attachment && (
+                <div className="mt-2 bg-gray-50 p-2 rounded flex items-center justify-between border border-gray-200">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    {attachment.type === 'image' && <ImageIcon size={16} />}
+                    {attachment.type === 'file' && <Paperclip size={16} />}
+                    {attachment.type === 'audio' && <Mic size={16} />}
+                    <span className="truncate max-w-xs">{attachment.name || 'Fichier joint'}</span>
+                  </div>
+                  <button onClick={() => setAttachment(null)} className="text-gray-400 hover:text-red-500">
+                    <X size={16} />
+                  </button>
                 </div>
-                <button onClick={() => setAttachment(null)} className="text-gray-400 hover:text-red-500">
-                  <X size={16} />
-                </button>
-              </div>
-            )}
+              )}
 
-            <div className="flex justify-between items-center mt-3">
-              <div className="flex gap-2">
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
-                  onChange={handleFileUpload} 
-                />
+              <div className="flex justify-between items-center mt-3">
+                <div className="flex gap-2">
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    onChange={handleFileUpload} 
+                  />
+                  <button 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-2 text-gray-400 hover:text-brand-blue hover:bg-blue-50 rounded-full transition-colors"
+                    title="Image ou Fichier"
+                  >
+                    <Paperclip size={20} />
+                  </button>
+                  <button 
+                     onClick={toggleRecording}
+                     className={`p-2 rounded-full transition-colors ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'text-gray-400 hover:text-brand-blue hover:bg-blue-50'}`}
+                     title="Message Vocal"
+                  >
+                    <Mic size={20} />
+                  </button>
+                  {isRecording && <span className="text-xs text-red-500 self-center font-bold">Enregistrement...</span>}
+                </div>
                 <button 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="p-2 text-gray-400 hover:text-brand-blue hover:bg-blue-50 rounded-full transition-colors"
-                  title="Image ou Fichier"
+                  onClick={handlePost}
+                  disabled={(!newPostContent.trim() && !attachment) || isNotifying}
+                  className="bg-brand-blue text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
                 >
-                  <Paperclip size={20} />
+                  {isNotifying ? 'Envoi...' : 'Publier'} <Send size={16} />
                 </button>
-                <button 
-                   onClick={toggleRecording}
-                   className={`p-2 rounded-full transition-colors ${isRecording ? 'bg-red-100 text-red-600 animate-pulse' : 'text-gray-400 hover:text-brand-blue hover:bg-blue-50'}`}
-                   title="Message Vocal"
-                >
-                  <Mic size={20} />
-                </button>
-                {isRecording && <span className="text-xs text-red-500 self-center font-bold">Enregistrement...</span>}
               </div>
-              <button 
-                onClick={handlePost}
-                disabled={(!newPostContent.trim() && !attachment) || isNotifying}
-                className="bg-brand-blue text-white px-6 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-colors"
-              >
-                {isNotifying ? 'Envoi...' : 'Publier'} <Send size={16} />
-              </button>
             </div>
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="bg-blue-50 p-6 rounded-xl text-center border border-blue-100 flex flex-col items-center">
+           <div className="p-3 bg-white rounded-full mb-3 shadow-sm">
+             <LogIn size={24} className="text-brand-blue" />
+           </div>
+           <h3 className="font-bold text-gray-900 mb-1">Rejoignez la discussion</h3>
+           <p className="text-sm text-gray-500 mb-4">Connectez-vous pour publier, commenter et échanger avec la communauté.</p>
+           <Link to="/login" className="bg-brand-blue text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-blue-600 transition-colors">
+             Se connecter
+           </Link>
+        </div>
+      )}
 
       {/* Feed */}
       <div className="space-y-6">
@@ -324,26 +341,32 @@ const Community: React.FC = () => {
                   )}
                 </div>
 
-                <div className="flex gap-2 items-center">
-                  <img src={currentUser.avatar} alt="Me" className="w-8 h-8 rounded-full" />
-                  <div className="flex-1 relative">
-                    <input 
-                      type="text" 
-                      value={commentInput}
-                      onChange={(e) => setCommentInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSendComment(post.id)}
-                      placeholder="Répondre au fil de discussion..."
-                      className="w-full bg-gray-100 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-brand-blue outline-none"
-                    />
-                    <button 
-                      onClick={() => handleSendComment(post.id)}
-                      disabled={!commentInput.trim()}
-                      className="absolute right-2 top-1/2 transform -translate-y-1/2 text-brand-blue hover:text-blue-700 disabled:text-gray-400"
-                    >
-                      <CornerDownRight size={16} />
-                    </button>
+                {currentUser ? (
+                  <div className="flex gap-2 items-center">
+                    <img src={currentUser.avatar} alt="Me" className="w-8 h-8 rounded-full" />
+                    <div className="flex-1 relative">
+                      <input 
+                        type="text" 
+                        value={commentInput}
+                        onChange={(e) => setCommentInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSendComment(post.id)}
+                        placeholder="Répondre au fil de discussion..."
+                        className="w-full bg-gray-100 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-brand-blue outline-none"
+                      />
+                      <button 
+                        onClick={() => handleSendComment(post.id)}
+                        disabled={!commentInput.trim()}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-brand-blue hover:text-blue-700 disabled:text-gray-400"
+                      >
+                        <CornerDownRight size={16} />
+                      </button>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="text-center text-xs text-gray-400">
+                    <Link to="/login" className="text-brand-blue hover:underline">Connectez-vous</Link> pour répondre.
+                  </div>
+                )}
               </div>
             )}
           </div>

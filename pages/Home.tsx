@@ -20,18 +20,18 @@ const Home: React.FC = () => {
                 PLATEFORME OFFICIELLE
               </span>
             </div>
-            <h1 className="font-serif text-5xl md:text-7xl font-bold mb-6 leading-tight max-w-4xl mx-auto md:mx-0">
+            <h1 className="font-serif text-4xl md:text-7xl font-bold mb-6 leading-tight max-w-4xl mx-auto md:mx-0">
               {siteConfig.heroText.title}
             </h1>
-            <p className="text-blue-100 text-lg mb-8 leading-relaxed max-w-2xl mx-auto md:mx-0">
+            <p className="text-blue-100 text-base md:text-lg mb-8 leading-relaxed max-w-2xl mx-auto md:mx-0">
               {siteConfig.heroText.description}
             </p>
-            <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-              <Link to="/courses" className="px-8 py-4 bg-white text-brand-blue font-bold rounded-lg transition-transform hover:scale-105 flex items-center shadow-lg hover:shadow-xl">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
+              <Link to="/courses" className="px-8 py-4 bg-white text-brand-blue font-bold rounded-lg transition-transform hover:scale-105 flex items-center justify-center shadow-lg hover:shadow-xl">
                 Accéder aux Ressources
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Link>
-              <Link to="/community" className="px-8 py-4 bg-blue-700 hover:bg-blue-800 text-white font-medium rounded-lg transition-colors border border-blue-600">
+              <Link to="/community" className="px-8 py-4 bg-blue-700 hover:bg-blue-800 text-white font-medium rounded-lg transition-colors border border-blue-600 flex items-center justify-center">
                 Rejoindre le Groupe
               </Link>
             </div>
@@ -56,22 +56,22 @@ const Home: React.FC = () => {
           { label: 'Satisfaction', val: '98%', icon: <Star className="text-brand-green" /> },
           { label: 'Pays', val: '22', icon: <CheckCircle className="text-brand-black" /> },
         ].map((stat, idx) => (
-          <div key={idx} className="bg-white p-8 rounded-2xl shadow-sm border-l-4 border-brand-blue flex flex-col items-center text-center hover:translate-y-[-5px] transition-transform duration-300">
+          <div key={idx} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border-l-4 border-brand-blue flex flex-col items-center text-center hover:translate-y-[-5px] transition-transform duration-300">
             <div className="mb-3 p-3 bg-blue-50 rounded-full">{stat.icon}</div>
-            <h3 className="text-3xl font-bold text-brand-black">{stat.val}</h3>
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">{stat.label}</p>
+            <h3 className="text-2xl md:text-3xl font-bold text-brand-black">{stat.val}</h3>
+            <p className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">{stat.label}</p>
           </div>
         ))}
       </section>
 
       {/* Featured Courses */}
       <section>
-        <div className="flex justify-between items-end mb-8 border-b border-gray-200 pb-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 border-b border-gray-200 pb-4 gap-4">
           <div>
             <h2 className="text-3xl font-bold text-brand-blue font-serif">Formations à la une</h2>
             <p className="text-gray-500 mt-1">Investissez en vous-même avec nos meilleurs programmes.</p>
           </div>
-          <Link to="/courses" className="px-4 py-2 bg-gray-100 text-brand-black rounded hover:bg-gray-200 font-medium transition-colors">
+          <Link to="/courses" className="px-4 py-2 bg-gray-100 text-brand-black rounded hover:bg-gray-200 font-medium transition-colors text-sm">
             Voir tout le catalogue
           </Link>
         </div>
@@ -111,18 +111,18 @@ const Home: React.FC = () => {
       </section>
 
       {/* Latest News */}
-      <section className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-10 shadow-lg border border-blue-100">
+      <section className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 md:p-10 shadow-lg border border-blue-100">
         <div className="flex items-center gap-4 mb-8">
            <div className="w-2 h-10 bg-brand-blue rounded-full"></div>
-           <h2 className="text-3xl font-bold text-brand-black font-serif">Actualités de la Communauté</h2>
+           <h2 className="text-2xl md:text-3xl font-bold text-brand-black font-serif">Actualités de la Communauté</h2>
         </div>
         <div className="grid md:grid-cols-2 gap-8">
           {posts.slice(0, 2).map(post => (
             <div key={post.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-brand-blue transition-colors group">
               <div className="flex gap-4 items-start">
-                <img src={post.author.avatar} alt={post.author.name} className="w-14 h-14 rounded-full object-cover ring-4 ring-gray-50 group-hover:ring-blue-100 transition-all" />
+                <img src={post.author.avatar} alt={post.author.name} className="w-14 h-14 rounded-full object-cover ring-4 ring-gray-50 group-hover:ring-blue-100 transition-all shrink-0" />
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <h4 className="font-bold text-lg text-brand-black">{post.author.name}</h4>
                     <span className="bg-blue-100 text-brand-blue text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Membre</span>
                   </div>

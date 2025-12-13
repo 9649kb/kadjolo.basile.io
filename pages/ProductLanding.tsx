@@ -1,11 +1,12 @@
 
+
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShoppingCart, Star, CheckCircle, Clock, Users, Award, Shield, ChevronDown, Play, FileText, Lock } from 'lucide-react';
+import { ShoppingCart, Star, CheckCircle, Clock, Users, Award, Shield, ChevronDown, Play, FileText, Lock, Share2, Facebook, ExternalLink, Link as LinkIcon, Copy } from 'lucide-react';
 import { courses, vendorProfiles } from '../services/mockData';
 import { Course, VendorProfile } from '../types';
 import PaymentModal from '../components/PaymentModal';
-import Footer from '../components/Footer';
+import SocialShare from '../components/SocialShare';
 
 const ProductLanding: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,9 +14,9 @@ const ProductLanding: React.FC = () => {
   const [vendor, setVendor] = useState<VendorProfile | null>(null);
   const [showPayment, setShowPayment] = useState(false);
   const [activeModule, setActiveModule] = useState<string | null>(null);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
-    // Scroll to top on load
     window.scrollTo(0, 0);
 
     const foundCourse = courses.find(c => c.id === id);
@@ -25,17 +26,28 @@ const ProductLanding: React.FC = () => {
       setVendor(foundVendor || null);
 
       // --- FACEBOOK PIXEL: VIEW CONTENT ---
-      // Simulate Pixel Event
+      // Real-world implementation would utilize window.fbq
       if (foundVendor?.facebookPixelId) {
-        console.log(`[FB PIXEL] Firing ViewContent for Pixel ID: ${foundVendor.facebookPixelId}`);
-        console.log(`[FB PIXEL] Content ID: ${foundCourse.id}, Value: ${foundCourse.promoPrice || foundCourse.price}`);
+        console.log(`%c[FB PIXEL] Event: ViewContent | Pixel ID: ${foundVendor.facebookPixelId}`, 'color: #3b5998; font-weight: bold;');
       }
     }
   }, [id]);
 
   const handleBuy = () => {
+    // Check if External Sales Page (Redirect immediately)
+    if (course?.hostingMode === 'external' && course.externalSalesPageUrl) {
+       console.log(`[REDIRECT] Redirecting to external sales page: ${course.externalSalesPageUrl}`);
+       // Pixel Track InitiateCheckout before redirect
+       if (vendor?.facebookPixelId) {
+         console.log(`%c[FB PIXEL] Event: InitiateCheckout (External) | Pixel ID: ${vendor.facebookPixelId}`, 'color: #3b5998; font-weight: bold;');
+       }
+       window.open(course.externalSalesPageUrl, '_blank');
+       return;
+    }
+
+    // Standard Platform Checkout
     if (vendor?.facebookPixelId) {
-      console.log(`[FB PIXEL] Firing InitiateCheckout for Pixel ID: ${vendor.facebookPixelId}`);
+      console.log(`%c[FB PIXEL] Event: InitiateCheckout | Pixel ID: ${vendor.facebookPixelId}`, 'color: #3b5998; font-weight: bold;');
     }
     setShowPayment(true);
   };
@@ -60,7 +72,7 @@ const ProductLanding: React.FC = () => {
     : 0;
 
   // Theme Handling
-  const primaryColor = vendor?.themeConfig?.primaryColor || '#2563eb'; // Default Blue
+  const primaryColor = vendor?.themeConfig?.primaryColor || '#2563eb'; 
   const themeStyle = vendor?.themeConfig?.style || 'modern';
   
   const buttonRadius = themeStyle === 'minimalist' ? '0px' : '12px';
@@ -70,7 +82,7 @@ const ProductLanding: React.FC = () => {
     <div className={`bg-white min-h-screen ${fontStyle}`}>
       {/* 1. ANNONCE BAR */}
       <div className="text-white text-center py-2 text-xs font-bold tracking-wide" style={{backgroundColor: '#000000'}}>
-        ⚡ OFFRE LIMITÉE : -{discount}% AUJOURD'HUI SEULEMENT ⚡
+        ⚡ OFFRE SPÉCIALE : ACCÈS IMMÉDIAT & SÉCURISÉ ⚡
       </div>
 
       {/* 2. HERO SECTION */}
@@ -83,7 +95,7 @@ const ProductLanding: React.FC = () => {
                 className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider"
                 style={{backgroundColor: `${primaryColor}20`, color: primaryColor}}
               >
-                <Award size={14} /> Formation Certifiante
+                <Award size={14} /> Formation Vérifiée
               </div>
               <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 leading-tight">
                 {course.title}
@@ -96,7 +108,7 @@ const ProductLanding: React.FC = () => {
               <div className="flex flex-wrap gap-4 text-sm font-medium text-gray-700">
                 <div className="flex items-center gap-1"><Users size={16} style={{color: primaryColor}} /> {course.students} Étudiants</div>
                 <div className="flex items-center gap-1"><Star size={16} className="text-yellow-400" fill="currentColor" /> {course.rating}/5</div>
-                <div className="flex items-center gap-1"><Clock size={16} className="text-gray-400" /> Accès à vie</div>
+                <div className="flex items-center gap-1"><Shield size={16} className="text-green-600" /> Garantie 30 Jours</div>
               </div>
 
               {/* Pricing & CTA */}
@@ -111,15 +123,28 @@ const ProductLanding: React.FC = () => {
                     <span className="text-4xl font-extrabold text-brand-black">{course.price.toLocaleString()} F</span>
                   )}
                 </div>
-                <button 
-                  onClick={handleBuy}
-                  className="w-full md:w-auto text-white text-lg font-bold px-8 py-4 shadow-xl transform hover:scale-105 transition-all flex items-center justify-center gap-2 animate-pulse"
-                  style={{backgroundColor: primaryColor, borderRadius: buttonRadius, boxShadow: `0 10px 15px -3px ${primaryColor}50`}}
-                >
-                  <ShoppingCart size={22} /> OBTENIR MAINTENANT
-                </button>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <button 
+                    onClick={handleBuy}
+                    className="w-full md:w-auto text-white text-lg font-bold px-8 py-4 shadow-xl transform hover:scale-105 transition-all flex items-center justify-center gap-2 animate-pulse"
+                    style={{backgroundColor: primaryColor, borderRadius: buttonRadius, boxShadow: `0 10px 15px -3px ${primaryColor}50`}}
+                  >
+                    {course.hostingMode === 'external' ? (
+                        <>VOIR LA PAGE DE VENTE <ExternalLink size={22} /></>
+                    ) : (
+                        <>OBTENIR MAINTENANT <ShoppingCart size={22} /></>
+                    )}
+                  </button>
+                  <button 
+                    onClick={() => setShowShare(true)}
+                    className="w-full md:w-auto bg-white border border-gray-200 text-gray-700 text-lg font-bold px-8 py-4 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+                    style={{borderRadius: buttonRadius}}
+                  >
+                    <Share2 size={22} /> Partager
+                  </button>
+                </div>
                 <p className="text-xs text-gray-500 mt-3 flex items-center gap-1">
-                  <Shield size={12} /> Paiement 100% Sécurisé • Satisfait ou Remboursé 30J
+                  <Lock size={12} /> Paiement crypté SSL • Accès à vie
                 </p>
               </div>
             </div>
@@ -128,28 +153,18 @@ const ProductLanding: React.FC = () => {
             <div className="order-1 lg:order-2 relative">
               <div className="relative overflow-hidden shadow-2xl border-4 border-white transform rotate-2 hover:rotate-0 transition-transform duration-500" style={{borderRadius: buttonRadius}}>
                 <img src={course.image} alt={course.title} className="w-full h-auto object-cover" />
-                {course.type === 'video' && (
+                {course.type === 'course' && (
                   <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                     <div className="w-20 h-20 bg-white/90 rounded-full flex items-center justify-center shadow-lg backdrop-blur cursor-pointer">
                       <Play size={30} style={{color: primaryColor}} fill="currentColor" />
                     </div>
                   </div>
                 )}
-                <div className="absolute top-4 right-4 bg-red-600 text-white font-bold px-3 py-1 rounded shadow-lg">
-                  -{discount}%
-                </div>
-              </div>
-              {/* Floating element */}
-              <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-xl shadow-xl border border-gray-100 hidden md:flex items-center gap-3 animate-bounce">
-                <div className="flex -space-x-2">
-                  {[1,2,3].map(i => (
-                    <img key={i} src={`https://picsum.photos/50/50?random=${i+20}`} className="w-8 h-8 rounded-full border-2 border-white" />
-                  ))}
-                </div>
-                <div className="text-xs font-bold">
-                  <span className="block" style={{color: primaryColor}}>+15 personnes</span>
-                  ont rejoint cette semaine
-                </div>
+                {discount > 0 && (
+                  <div className="absolute top-4 right-4 bg-red-600 text-white font-bold px-3 py-1 rounded shadow-lg">
+                    -{discount}%
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -161,27 +176,27 @@ const ProductLanding: React.FC = () => {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <p className="uppercase tracking-widest text-gray-400 font-bold text-xs mb-6">UNE FORMATION PROPOSÉE PAR</p>
           <div className="flex items-center justify-center gap-4 mb-8">
-            <img src={vendor?.logoUrl || "https://via.placeholder.com/50"} className="w-16 h-16 rounded-full border-2 border-gray-100 p-1" />
+            <img src={vendor?.logoUrl || "https://via.placeholder.com/50"} className="w-16 h-16 rounded-full border-2 border-gray-100 p-1 object-cover" />
             <div className="text-left">
               <h3 className="font-bold text-xl text-gray-900">{vendor?.shopName || course.instructor}</h3>
-              <p className="text-sm text-gray-500">{vendor?.isVerified ? 'Vendeur Vérifié ☑' : 'Instructeur'}</p>
+              <p className="text-sm text-gray-500">{vendor?.isVerified ? 'Vendeur Certifié ☑' : 'Instructeur'}</p>
             </div>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="p-4 bg-gray-50 rounded-xl">
               <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-3" />
-              <h4 className="font-bold mb-1">Qualité Garantie</h4>
-              <p className="text-sm text-gray-500">Contenu vérifié et approuvé par les experts.</p>
+              <h4 className="font-bold mb-1">Satisfait ou Remboursé</h4>
+              <p className="text-sm text-gray-500">30 jours pour tester sans risque.</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-xl">
               <Lock className="w-8 h-8 mx-auto mb-3" style={{color: primaryColor}} />
-              <h4 className="font-bold mb-1">Accès Sécurisé</h4>
-              <p className="text-sm text-gray-500">Plateforme privée disponible 24/7.</p>
+              <h4 className="font-bold mb-1">Paiement Sécurisé</h4>
+              <p className="text-sm text-gray-500">Vos données sont protégées (SSL).</p>
             </div>
             <div className="p-4 bg-gray-50 rounded-xl">
               <Star className="w-8 h-8 text-yellow-500 mx-auto mb-3" />
-              <h4 className="font-bold mb-1">Support Dédié</h4>
-              <p className="text-sm text-gray-500">Réponses à toutes vos questions.</p>
+              <h4 className="font-bold mb-1">Support 24/7</h4>
+              <p className="text-sm text-gray-500">Une équipe dédiée pour vous aider.</p>
             </div>
           </div>
         </div>
@@ -195,7 +210,7 @@ const ProductLanding: React.FC = () => {
             {/* Description */}
             <div>
               <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                <FileText style={{color: primaryColor}} /> Description du programme
+                <FileText style={{color: primaryColor}} /> Description détaillée
               </h2>
               <div className="prose prose-blue text-gray-600 leading-relaxed whitespace-pre-line">
                 {course.description}
@@ -205,7 +220,7 @@ const ProductLanding: React.FC = () => {
             {/* Modules */}
             {course.modules && (
               <div>
-                <h2 className="text-2xl font-bold mb-6">Programme de la formation</h2>
+                <h2 className="text-2xl font-bold mb-6">Contenu de la formation</h2>
                 <div className="space-y-3">
                   {course.modules.map((mod, idx) => (
                     <div key={mod.id} className="bg-white rounded-lg border border-gray-200 overflow-hidden">
@@ -246,10 +261,7 @@ const ProductLanding: React.FC = () => {
                    <CheckCircle size={16} className="text-green-500" /> {course.modules?.length || 5} Modules complets
                 </li>
                 <li className="flex items-center gap-2 text-sm text-gray-600">
-                   <CheckCircle size={16} className="text-green-500" /> Ressources téléchargeables
-                </li>
-                <li className="flex items-center gap-2 text-sm text-gray-600">
-                   <CheckCircle size={16} className="text-green-500" /> Certificat de fin de formation
+                   <CheckCircle size={16} className="text-green-500" /> Support communautaire
                 </li>
               </ul>
               
@@ -260,10 +272,10 @@ const ProductLanding: React.FC = () => {
 
               <button 
                 onClick={handleBuy}
-                className="w-full text-white py-4 font-bold transition-colors shadow-lg"
+                className="w-full text-white py-4 font-bold transition-colors shadow-lg animate-pulse"
                 style={{backgroundColor: primaryColor, borderRadius: buttonRadius}}
               >
-                JE VEUX CETTE FORMATION
+                {course.hostingMode === 'external' ? 'ACCÉDER À LA PAGE' : 'JE VEUX CETTE FORMATION'}
               </button>
               
               <div className="flex justify-center gap-2 mt-4 grayscale opacity-50">
@@ -305,7 +317,7 @@ const ProductLanding: React.FC = () => {
       {/* 6. MOBILE STICKY CTA */}
       <div className="lg:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 p-4 z-50 flex items-center justify-between shadow-[0_-5px_15px_rgba(0,0,0,0.1)]">
         <div>
-           <p className="text-xs text-gray-500 uppercase font-bold">Total à payer</p>
+           <p className="text-xs text-gray-500 uppercase font-bold">Total</p>
            <p className="text-xl font-extrabold text-brand-black">{course.promoPrice ? course.promoPrice.toLocaleString() : course.price.toLocaleString()} F</p>
         </div>
         <button 
@@ -313,17 +325,19 @@ const ProductLanding: React.FC = () => {
           className="text-white px-8 py-3 font-bold shadow-lg"
           style={{backgroundColor: primaryColor, borderRadius: buttonRadius}}
         >
-          ACHETER
+          {course.hostingMode === 'external' ? 'VOIR' : 'ACHETER'}
         </button>
       </div>
       
-      {/* Footer Minimal for Landing Page */}
+      {/* Footer Minimal for Landing Page (Required for Ads) */}
       <footer className="bg-brand-black text-white py-8 text-center text-sm text-gray-500">
-        <p className="mb-4">© {new Date().getFullYear()} KADJOLO BASILE. Tous droits réservés.</p>
-        <div className="flex justify-center gap-4">
-          <Link to="/privacy" className="hover:text-white">Politique de Confidentialité</Link>
-          <Link to="/terms" className="hover:text-white">CGV</Link>
-          <Link to="/legal" className="hover:text-white">Mentions Légales</Link>
+        <p className="mb-4">© {new Date().getFullYear()} {vendor?.shopName || 'KADJOLO'}. Tous droits réservés.</p>
+        <p className="text-xs mb-4 max-w-lg mx-auto">Ce site ne fait pas partie du site web Facebook ou de Facebook Inc. De plus, ce site n'est PAS approuvé par Facebook en aucune façon. FACEBOOK est une marque de commerce de FACEBOOK, Inc.</p>
+        <div className="flex justify-center gap-4 flex-wrap">
+          <Link to="/privacy" className="hover:text-white" target="_blank">Politique de Confidentialité</Link>
+          <Link to="/terms" className="hover:text-white" target="_blank">CGV</Link>
+          <Link to="/legal" className="hover:text-white" target="_blank">Mentions Légales</Link>
+          <Link to="/refund" className="hover:text-white" target="_blank">Remboursement</Link>
         </div>
       </footer>
 
@@ -335,11 +349,20 @@ const ProductLanding: React.FC = () => {
           onSuccess={() => {
              // FIRE PURCHASE PIXEL
              if (vendor?.facebookPixelId) {
-                console.log(`[FB PIXEL] Firing Purchase for Pixel ID: ${vendor.facebookPixelId}, Value: ${course.promoPrice || course.price}`);
+                console.log(`%c[FB PIXEL] Event: Purchase | Pixel ID: ${vendor.facebookPixelId} | Value: ${course.promoPrice || course.price}`, 'color: #3b5998; font-weight: bold;');
              }
-             alert("Paiement réussi ! Vous avez reçu un email.");
+             alert("Paiement réussi ! Vous avez reçu un email avec vos accès.");
              setShowPayment(false);
           }}
+        />
+      )}
+
+      {showShare && (
+        <SocialShare 
+           url={window.location.href} 
+           title={course.title} 
+           subtitle="Partager cette formation avec un ami"
+           onClose={() => setShowShare(false)} 
         />
       )}
     </div>

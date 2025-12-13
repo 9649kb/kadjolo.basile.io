@@ -54,7 +54,6 @@ export const fetchLatestVideos = async (): Promise<YouTubeVideo[]> => {
   // this code would automatically fetch the latest videos.
   
   if (!API_KEY || API_KEY === 'DEMO_KEY') {
-    // console.log("Using Fallback YouTube Data (No API Key)");
     return FALLBACK_VIDEOS;
   }
 
@@ -66,7 +65,9 @@ export const fetchLatestVideos = async (): Promise<YouTubeVideo[]> => {
     );
 
     if (!response.ok) {
-      throw new Error('YouTube API request failed');
+      // Quietly fall back without spamming console.error for expected 403s in demo
+      console.log('YouTube API unavailable, using fallback data.');
+      return FALLBACK_VIDEOS;
     }
 
     const data = await response.json();
@@ -83,7 +84,7 @@ export const fetchLatestVideos = async (): Promise<YouTubeVideo[]> => {
     }));
 
   } catch (error) {
-    console.error("Error fetching YouTube videos, using fallback:", error);
+    console.log("YouTube fetch error, using fallback.");
     return FALLBACK_VIDEOS;
   }
 };

@@ -1,6 +1,6 @@
 
-
-import { User, Post, Course, VendorProfile, Testimonial, Sale, SupportTicket, CreatorStats, AdminGlobalStats, LiveSession, PayoutRequest, NewsItem, AffiliateLink, MarketingAsset } from '../types';
+import { User, Post, Course, VendorProfile, Testimonial, Sale, SupportTicket, CreatorStats, AdminGlobalStats, LiveSession, PayoutRequest, NewsItem, AffiliateLink, MarketingAsset, PaymentMethodConfig, Transaction, Coupon, ActivityLog, SiteSettings, AdminReport, SystemLog, AdminLog, CommissionRecord, RewardRule, ChatMessage } from '../types';
+import { notifyAdminPayoutRequest, notifyNewProduct } from './notificationService'; // IMPORT ADDED
 
 // CENTRALIZED CONFIGURATION
 export const siteConfig = {
@@ -22,452 +22,637 @@ export const siteConfig = {
   }
 };
 
+export const mockSiteSettings: SiteSettings = {
+  siteName: 'KADJOLO BASILE Marketplace',
+  commissionRate: 10, // --- COMMISSION AUTOMATIQUE 10% ---
+  currency: 'XOF',
+  maintenanceMode: false,
+  allowNewRegistrations: true,
+  autoApproveCourses: false, // Changed to false to demonstrate moderation
+  supportEmail: 'contact@kadjolo.com',
+  adminPaymentAccounts: []
+};
+
+// RESTART FROM ZERO: Standard Admin User WITH FOUNDER FLAG
 export const currentUser: User = {
   id: 'u1',
   name: siteConfig.adminName, 
   avatar: siteConfig.profilePicture,
   role: 'admin', 
   email: siteConfig.email,
-  isFounder: true, // YOU ARE THE FOUNDER
-  permissions: ['manage_vendors', 'manage_team', 'view_finance', 'moderate_content', 'manage_live']
+  permissions: ['manage_users', 'manage_finance', 'manage_content', 'manage_team', 'manage_settings'],
+  isFounder: true, // MANDATORY ACCESS FLAG
+  balance: 0,
+  affiliateCode: 'KADJOLO228',
+  joinedAt: new Date().toISOString(),
+  twoFactorEnabled: true
 };
 
-export const systemAdmins: User[] = [
-  currentUser,
-  { 
-    id: 'admin2', 
-    name: 'Responsable Technique', 
-    avatar: 'https://picsum.photos/200/200?random=99', 
-    role: 'admin', 
-    email: 'tech@kadjolo.com',
-    isFounder: false,
-    permissions: ['moderate_content', 'manage_vendors'] // Limited Admin (Cannot see finance or add admins)
+export const teamMembers: User[] = [
+  currentUser 
+];
+
+// --- MOCK REWARD RULES ---
+export const mockRewardRules: RewardRule[] = [
+  {
+    id: 'reward_1',
+    name: 'Club Millionnaire',
+    description: 'Atteindre 1 Million FCFA de chiffre d\'affaires cumulé.',
+    type: 'revenue',
+    threshold: 1000000,
+    rewardType: 'badge_vip',
+    rewardValue: 'Badge "Millionnaire" + Coaching 30min',
+    icon: 'Crown',
+    color: 'bg-yellow-500'
   },
-  { 
-    id: 'admin3', 
-    name: 'Responsable Finance', 
-    avatar: 'https://picsum.photos/200/200?random=98', 
-    role: 'admin', 
-    email: 'finance@kadjolo.com',
-    isFounder: false,
-    permissions: ['view_finance'] // Only Finance
+  {
+    id: 'reward_2',
+    name: 'Top Vendeur (100 Ventes)',
+    description: 'Réaliser 100 ventes de produits sur la plateforme.',
+    type: 'sales_count',
+    threshold: 100,
+    rewardType: 'bonus_cash',
+    rewardValue: 50000,
+    icon: 'Trophy',
+    color: 'bg-purple-600'
+  },
+  {
+    id: 'reward_3',
+    name: 'Prime d\'Excellence',
+    description: 'Atteindre 5 Millions FCFA de CA.',
+    type: 'revenue',
+    threshold: 5000000,
+    rewardType: 'gift_physical',
+    rewardValue: 'iPhone 15 ou Équivalent',
+    icon: 'Gift',
+    color: 'bg-red-600'
   }
 ];
 
-// Mock Vendor Payment Configuration
-const defaultPaymentConfig = {
-  mobileMoney: {
-    tmoney: '+228 90 00 00 00',
-    flooz: '+228 99 00 00 00',
-    wave: '+225 07 00 00 00 00',
-    mtn: '+229 01 00 00 00'
-  },
-  international: {
-    paypalEmail: 'paiement@kadjolo.com',
-    stripePublicKey: 'pk_test_mock'
-  },
-  crypto: {
-    enabled: true,
-    usdtAddress: 'TRC20...ADDRESS...MOCK',
-    btcAddress: 'BTC...ADDRESS...MOCK'
-  },
-  bank: {
-    enabled: true,
-    iban: 'TG00 0000 0000 0000 0000',
-    bankName: 'Orabank Togo'
-  }
-};
+export const systemAdmins: User[] = teamMembers;
 
+export const adminReports: AdminReport[] = [];
+
+export const systemLogs: SystemLog[] = [];
+
+export const adminLogs: AdminLog[] = [];
+
+// MOCK DATA: Historique des commissions pour visualisation immédiate
+export const commissionRecords: CommissionRecord[] = [
+  {
+    id: 'comm_1',
+    saleId: 'sale_99',
+    courseTitle: 'Formation E-commerce Pro',
+    vendorId: 'v2',
+    vendorName: 'Jean Vendeur',
+    totalAmount: 25000,
+    adminAmount: 2500, // 10%
+    vendorAmount: 22500,
+    rateApplied: 10,
+    date: new Date(Date.now() - 86400000).toISOString()
+  },
+  {
+    id: 'comm_2',
+    saleId: 'sale_98',
+    courseTitle: 'Pack Trading Débutant',
+    vendorId: 'v2',
+    vendorName: 'Jean Vendeur',
+    totalAmount: 10000,
+    adminAmount: 1000, // 10%
+    vendorAmount: 9000,
+    rateApplied: 10,
+    date: new Date(Date.now() - 172800000).toISOString()
+  }
+];
+
+// --- DYNAMIC PAYMENT METHODS (ENRICHED) ---
+export const globalPaymentMethods: PaymentMethodConfig[] = [
+  {
+    id: 'pm1',
+    name: 'TMoney',
+    type: 'mobile_money',
+    integrationMode: 'manual',
+    instructions: 'Envoyez le montant exact au 90 00 00 00 (Compte Principal KADJOLO). Mettez votre nom en référence.',
+    isActive: true,
+    requiresProof: true,
+    color: '#FFD700',
+    textColor: '#000000',
+    logoUrl: 'https://togocom.tg/wp-content/uploads/2020/11/tmoney.png',
+    providerCode: 'tmoney'
+  },
+  {
+    id: 'pm2',
+    name: 'Flooz',
+    type: 'mobile_money',
+    integrationMode: 'manual',
+    instructions: 'Envoyez le montant au 99 00 00 00 (Compte Principal KADJOLO). Frais de retrait à votre charge.',
+    isActive: true,
+    requiresProof: true,
+    color: '#0000FF',
+    textColor: '#FFFFFF',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/22/Moov_Africa_logo.png',
+    providerCode: 'flooz'
+  },
+  {
+    id: 'pm3',
+    name: 'Orange Money',
+    type: 'mobile_money',
+    integrationMode: 'manual',
+    instructions: 'Transfert OM vers le +228 00 00 00 00.',
+    isActive: true,
+    requiresProof: true,
+    color: '#FF7900',
+    textColor: '#FFFFFF',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/1200px-Orange_logo.svg.png',
+    providerCode: 'orange'
+  },
+  {
+    id: 'pm4',
+    name: 'Wave',
+    type: 'mobile_money',
+    integrationMode: 'manual',
+    instructions: 'Envoyez via l\'application Wave au numéro indiqué.',
+    isActive: true,
+    requiresProof: true,
+    color: '#1DC0F1',
+    textColor: '#FFFFFF',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Wave_logo.svg/1200px-Wave_logo.svg.png',
+    providerCode: 'wave'
+  },
+  {
+    id: 'pm5',
+    name: 'PayPal',
+    type: 'paypal',
+    integrationMode: 'api_simulated',
+    isActive: true,
+    color: '#003087',
+    textColor: '#FFFFFF',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg',
+    providerCode: 'paypal'
+  },
+  {
+    id: 'pm6',
+    name: 'Carte Bancaire (Stripe)',
+    type: 'card',
+    integrationMode: 'api_simulated',
+    isActive: true,
+    color: '#635BFF',
+    textColor: '#FFFFFF',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Stripe_Logo%2C_revised_2016.svg/2560px-Stripe_Logo%2C_revised_2016.svg.png',
+    providerCode: 'stripe'
+  },
+  {
+    id: 'pm7',
+    name: 'Western Union',
+    type: 'manual',
+    integrationMode: 'manual',
+    instructions: 'Bénéficiaire : KADJOLO BASILE, Ville : Kara, Pays : Togo. Envoyez le MTCN.',
+    isActive: false,
+    requiresProof: true,
+    color: '#FFDA00',
+    textColor: '#000000',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/fd/Western_Union_logo.svg/2560px-Western_Union_logo.svg.png',
+    providerCode: 'wu'
+  },
+  {
+    id: 'pm8',
+    name: 'Bitcoin / Crypto',
+    type: 'crypto',
+    integrationMode: 'manual',
+    instructions: 'Adresse USDT (TRC20) : T9xxxxxxxxxxxxxxxx. Envoyez le hash de transaction.',
+    isActive: false,
+    requiresProof: true,
+    color: '#F7931A',
+    textColor: '#FFFFFF',
+    logoUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Bitcoin.svg/1200px-Bitcoin.svg.png',
+    providerCode: 'btc'
+  },
+  {
+    id: 'pm9',
+    name: 'Virement Bancaire',
+    type: 'bank',
+    integrationMode: 'manual',
+    instructions: 'IBAN : TGxx xxxx xxxx... BIC : xxxx. Veuillez mentionner le numéro de commande.',
+    isActive: false,
+    requiresProof: true,
+    color: '#374151',
+    textColor: '#FFFFFF',
+    providerCode: 'bank'
+  }
+];
+
+export const vendorActivityLogs: ActivityLog[] = [];
+
+// RESTART FROM ZERO: Main Vendor Profile Reset
 export const vendorProfiles: VendorProfile[] = [
   {
     id: 'v1',
     userId: 'u1',
+    email: 'basilekadjolo4@gmail.com',
     shopName: 'KADJOLO Official Store',
-    description: 'La boutique officielle. Retrouvez ici toutes mes méthodes exclusives pour réussir votre business et votre mindset.',
+    description: 'La boutique officielle.',
     logoUrl: siteConfig.profilePicture,
+    coverUrl: '',
     isVerified: true,
-    isTopSeller: true,
-    joinedDate: 'Jan 2023',
+    isTopSeller: true, // Example of already top seller
+    joinedDate: new Date().toLocaleDateString(),
     status: 'active',
     commissionRate: 10,
     canStream: true,
-    totalSales: 2450,
-    totalRevenue: 4500000,
-    totalCommissionPaid: 450000,
-    walletBalance: 250000, // Remaining balance to withdraw
+    totalSales: 150, // Matches condition for reward
+    totalRevenue: 1500000, // Matches condition for reward
+    totalCommissionPaid: 150000, 
+    walletBalance: 0, 
+    pendingBalance: 0, 
     kycStatus: 'verified',
-    paymentConfig: defaultPaymentConfig,
+    withdrawalSettings: {
+        mobileMoneyNumber: '',
+        mobileMoneyProvider: 'TMoney',
+        autoWithdrawalThreshold: 50000
+    },
     themeConfig: {
       primaryColor: '#000000',
-      style: 'bold'
-    }
+      style: 'business',
+      font: 'sans'
+    },
+    activityLogs: [],
+    receivedRewards: [] // Init empty
   },
   {
     id: 'v2',
     userId: 'u2',
-    shopName: 'Digital Success Academy',
-    description: 'Expert en marketing digital et freelance. J\'aide les créateurs à vivre de leur passion.',
-    logoUrl: 'https://picsum.photos/200/200?random=50',
-    isVerified: true,
-    isTopSeller: false,
-    joinedDate: 'Mars 2023',
+    email: 'vendeur@test.com',
+    shopName: 'Business Pro Académie',
+    description: 'Formations business.',
+    logoUrl: 'https://ui-avatars.com/api/?name=Business+Pro',
+    isVerified: false,
+    joinedDate: new Date().toLocaleDateString(),
     status: 'active',
     commissionRate: 10,
-    canStream: true,
-    totalSales: 120,
-    totalRevenue: 600000,
-    totalCommissionPaid: 60000,
+    totalSales: 12,
+    totalRevenue: 120000,
+    totalCommissionPaid: 12000,
     walletBalance: 50000,
+    pendingBalance: 0,
     kycStatus: 'verified',
-    paymentConfig: { ...defaultPaymentConfig, crypto: { enabled: false }, bank: { enabled: false } },
-    themeConfig: {
-      primaryColor: '#2563eb',
-      style: 'modern'
-    }
-  },
-  {
-    id: 'v3',
-    userId: 'u3',
-    shopName: 'Crypto Elite',
-    description: 'Analyses techniques et fondamentales.',
-    logoUrl: 'https://picsum.photos/200/200?random=51',
-    isVerified: false,
-    isTopSeller: false,
-    joinedDate: 'Avril 2023',
-    status: 'blocked',
-    commissionRate: 10,
-    canStream: false,
-    totalSales: 0,
-    totalRevenue: 0,
-    totalCommissionPaid: 0,
-    walletBalance: 0,
-    kycStatus: 'rejected'
+    receivedRewards: []
   }
 ];
 
-export const payoutRequests: PayoutRequest[] = [
-  {
-    id: 'pr1',
-    vendorId: 'v2',
-    vendorName: 'Digital Success Academy',
-    amount: 150000,
-    method: 'mobile_money',
-    details: '+228 90 90 90 90 (TMoney)',
-    requestDate: '2023-10-25',
-    status: 'pending'
-  },
-  {
-    id: 'pr2',
-    vendorId: 'v1',
-    vendorName: 'KADJOLO Official Store',
-    amount: 500000,
-    method: 'bank',
-    details: 'TG00...009',
-    requestDate: '2023-10-20',
-    processedDate: '2023-10-21',
-    status: 'paid'
-  }
-];
+export const mockCoupons: Coupon[] = [];
 
-export const testimonials: Testimonial[] = [
-  {
-    id: 't1',
-    name: 'Jean-Pierre K.',
-    role: 'Entrepreneur E-commerce',
-    content: "Grâce aux conseils de Basile, j'ai doublé mon chiffre d'affaires en 3 mois.",
-    avatar: 'https://picsum.photos/100/100?random=20',
-    rating: 5
-  },
-  {
-    id: 't2',
-    name: 'Amina D.',
-    role: 'Coach de Vie',
-    content: "La formation sur le leadership a été un déclic.",
-    avatar: 'https://picsum.photos/100/100?random=21',
-    rating: 5
-  },
-];
+export const payoutRequests: PayoutRequest[] = [];
 
-export const posts: Post[] = [
-  {
-    id: 'p1',
-    author: { id: 'admin', name: siteConfig.adminName, avatar: siteConfig.profilePicture, role: 'admin', email: siteConfig.email },
-    content: "L'échec n'est qu'une étape vers le succès. Écoutez ce message vocal pour la motivation du jour !",
-    image: 'https://picsum.photos/800/400',
-    audioUrl: 'mock-audio.mp3',
-    attachmentType: 'audio',
-    likes: 1240,
-    comments: 45,
-    timestamp: 'Il y a 2 heures',
-    likedByMe: false
-  },
-];
+export const testimonials: Testimonial[] = [];
 
-// --- NEW CREATOR STUDIO MOCK DATA ---
+export const posts: Post[] = [];
 
-// Calculating Mock Sales Data based on 10% commission
-const totalRev = 4589000;
-const commission = totalRev * 0.10;
+// --- CREATOR STUDIO MOCK DATA (RESET) ---
 
 export const creatorStats: CreatorStats = {
-  totalSales: 24500,
-  revenue: totalRev, 
-  commissionPaid: commission,
-  students: 1205,
-  monthlyGrowth: 12.5,
-  conversionRate: 3.8,
-  totalClicks: 15420
+  totalSales: 0, 
+  revenue: 0, 
+  commissionPaid: 0, 
+  students: 0, 
+  monthlyGrowth: 0, 
+  conversionRate: 0, 
+  totalClicks: 0 
 };
 
 export const adminGlobalStats: AdminGlobalStats = {
-  totalPlatformRevenue: commission * 1.5, // Total commissions collected
-  totalSalesVolume: totalRev * 1.5, // GMV
-  totalVendors: 14,
-  totalCourses: 45,
-  activeStudents: 5400,
-  pendingPayouts: 1
+  totalPlatformRevenue: 3500, // Pre-filled with mock commissions
+  totalSalesVolume: 35000,
+  totalVendors: 2, 
+  totalCourses: 0,
+  activeStudents: 0,
+  pendingPayouts: 0
 };
 
-export const salesHistory: Sale[] = [
-  { id: 's1', studentName: 'Alice Koffi', courseTitle: 'Leadership Absolu', amount: 10000, currency: 'XOF', platformFee: 1000, netEarnings: 9000, date: '2023-10-24', status: 'completed', paymentMethod: 'Mobile Money', paymentProvider: 'Flooz', transactionId: 'TX12345' },
-  { id: 's2', studentName: 'Marc T.', courseTitle: 'Les 10 Piliers', amount: 5000, currency: 'XOF', platformFee: 500, netEarnings: 4500, date: '2023-10-23', status: 'completed', paymentMethod: 'Mobile Money', paymentProvider: 'TMoney', transactionId: 'TX67890' },
-  { id: 's3', studentName: 'Jean D.', courseTitle: 'Leadership Absolu', amount: 10000, currency: 'XOF', platformFee: 1000, netEarnings: 9000, date: '2023-10-23', status: 'completed', paymentMethod: 'Mobile Money', paymentProvider: 'Wave', transactionId: 'TX11223' },
-  { id: 's4', studentName: 'Eric M.', courseTitle: 'Crypto Master', amount: 50000, currency: 'XOF', platformFee: 5000, netEarnings: 45000, date: '2023-10-22', status: 'verifying', paymentMethod: 'Crypto', paymentProvider: 'USDT (TRC20)', transactionId: 'TX44556' },
-  { id: 's5', studentName: 'Sophie L.', courseTitle: 'Freelance Pro', amount: 25000, currency: 'XOF', platformFee: 2500, netEarnings: 22500, date: '2023-10-21', status: 'completed', paymentMethod: 'Card', paymentProvider: 'Visa', transactionId: 'TX77889' },
-];
+export const salesHistory: Sale[] = []; 
 
+export const mockTransactions: Transaction[] = []; 
+
+// ADDED: Support Tickets Mock Data
 export const supportTickets: SupportTicket[] = [
-  { 
-    id: 'st1', 
-    studentName: 'Paul Amegbo', 
-    studentAvatar: 'https://picsum.photos/50/50?random=100', 
-    lastMessage: 'Je n\'arrive pas à télécharger le module 3.', 
-    unreadCount: 2, 
-    status: 'open', 
-    timestamp: '10:30',
+  {
+    id: 'ticket_1',
+    studentName: 'Alice Etudiante',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Alice',
+    lastMessage: 'Je n\'arrive pas à accéder au module 3 de la formation Business.',
+    unreadCount: 1,
+    status: 'open',
+    timestamp: new Date().toISOString(),
     messages: [
-      { id: 'm1', user: 'Paul Amegbo', text: 'Bonjour, le lien PDF semble brisé.', timestamp: '10:25' },
-      { id: 'm2', user: 'Paul Amegbo', text: 'Je n\'arrive pas à télécharger le module 3.', timestamp: '10:30' }
+      { id: 'm1', user: 'Alice Etudiante', text: 'Bonjour, j\'ai payé mais le module 3 reste bloqué. Pouvez-vous m\'aider ?', timestamp: new Date(Date.now() - 3600000).toISOString() }
     ]
   },
-  { 
-    id: 'st2', 
-    studentName: 'Sarah M.', 
-    studentAvatar: 'https://picsum.photos/50/50?random=101', 
-    lastMessage: 'Merci, problème résolu !', 
-    unreadCount: 0, 
-    status: 'resolved', 
-    timestamp: 'Hier',
-    messages: []
+  {
+    id: 'ticket_2',
+    studentName: 'Jean Vendeur',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Jean',
+    lastMessage: 'Quand est-ce que mon retrait sera validé ?',
+    unreadCount: 0,
+    status: 'resolved',
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+    messages: [
+      { id: 'm1', user: 'Jean Vendeur', text: 'Demande faite hier. Je suis pressé.', timestamp: 'Hier' },
+      { id: 'm2', user: 'Support', text: 'Bonjour Jean, c\'est validé ce matin. Vous devriez recevoir les fonds d\'ici 1h.', timestamp: 'Aujourd\'hui', isSender: true }
+    ]
+  },
+  {
+    id: 'ticket_3',
+    studentName: 'Marc Dubos',
+    studentAvatar: 'https://ui-avatars.com/api/?name=Marc',
+    lastMessage: 'Erreur lors du paiement PayPal',
+    unreadCount: 1,
+    status: 'open',
+    timestamp: new Date().toISOString(),
+    messages: [
+      { id: 'm1', user: 'Marc Dubos', text: 'Salut, j\'essaie de payer via PayPal mais ça tourne en rond.', timestamp: new Date().toISOString() }
+    ]
   }
 ];
 
+// --- SUPPORT SERVICE ---
+export const supportService = {
+  getTickets: () => supportTickets,
+  
+  replyToTicket: (ticketId: string, text: string, adminName: string) => {
+    const ticket = supportTickets.find(t => t.id === ticketId);
+    if (!ticket) return;
+
+    const newMessage: ChatMessage = {
+      id: `msg_${Date.now()}`,
+      user: adminName,
+      text,
+      timestamp: new Date().toISOString(),
+      isSender: true,
+      isModerator: true
+    };
+
+    ticket.messages.push(newMessage);
+    ticket.lastMessage = `Vous: ${text}`;
+    ticket.unreadCount = 0; // Admin replied, read
+    return ticket;
+  },
+
+  updateStatus: (ticketId: string, status: 'open' | 'resolved') => {
+    const ticket = supportTickets.find(t => t.id === ticketId);
+    if (ticket) ticket.status = status;
+  },
+
+  deleteTicket: (ticketId: string) => {
+    const index = supportTickets.findIndex(t => t.id === ticketId);
+    if (index !== -1) supportTickets.splice(index, 1);
+  },
+
+  markAsRead: (ticketId: string) => {
+    const ticket = supportTickets.find(t => t.id === ticketId);
+    if (ticket) ticket.unreadCount = 0;
+  }
+};
+
+// ADDED: Courses with moderation status
 export const courses: Course[] = [
   {
     id: 'c1',
-    title: 'Leadership Absolu : Devenez Incontournable',
-    instructor: siteConfig.adminName,
+    title: 'Devenir Freelance à Succès',
+    price: 15000,
+    instructor: 'KADJOLO Official Store',
     instructorId: 'v1',
-    price: 19700,
-    promoPrice: 14700,
-    currency: 'XOF',
-    image: 'https://picsum.photos/400/250?random=1',
+    image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
     category: 'Business',
-    rating: 4.9,
-    students: 1205,
+    rating: 4.8,
+    students: 120,
     isPremium: true,
     type: 'course',
-    description: 'Une formation vidéo complète de 12 modules pour maîtriser les aspects fondamentaux du leadership moderne.',
-    level: 'expert',
-    hasCertificate: true,
     status: 'published',
+    visibility: 'public',
     hostingMode: 'internal',
-    createdAt: '2023-09-15',
+    createdAt: new Date().toISOString(),
+    description: "Apprenez toutes les ficelles du métier de freelance : de la prospection à la fidélisation client. Inclus : modèles de contrats et scripts de vente.",
     modules: [
-      {
-        id: 'm1', title: 'Introduction au Mindset', lessons: [
-          { id: 'l1', title: 'Bienvenue', type: 'video', contentUrl: 'https://youtu.be/xxx', isExternal: true, duration: '05:00', hostingType: 'external' },
-          { id: 'l2', title: 'Le mythe du talent', type: 'video', contentUrl: '', duration: '12:00', hostingType: 'internal' }
-        ]
-      },
-      {
-        id: 'm2', title: 'Communication d\'Impact', lessons: [
-          { id: 'l3', title: 'La règle des 3 secondes', type: 'video', contentUrl: '', duration: '15:30', hostingType: 'internal' },
-          { id: 'l4', title: 'Support PDF', type: 'pdf', contentUrl: '', duration: '3 pages', hostingType: 'internal' }
-        ]
-      }
-    ],
-    reviews: [
-      {
-        id: 'r1',
-        userId: 'u3',
-        userName: 'Marc Dupont',
-        userAvatar: 'https://picsum.photos/50/50?random=1',
-        rating: 5,
-        comment: "Excellente formation. J'ai appliqué les conseils dès la première semaine.",
-        date: "12 Oct 2023",
-        reply: "Merci Marc ! Ravi de voir tes progrès."
-      }
+      { id: 'm1', title: 'Introduction au Freelancing', lessons: [] },
+      { id: 'm2', title: 'Trouver ses premiers clients', lessons: [] }
     ]
   },
   {
-    id: 'eb1',
-    title: 'Les 10 Piliers de la Richesse (E-Book)',
-    instructor: siteConfig.adminName,
-    instructorId: 'v1',
-    price: 5000,
-    currency: 'XOF',
-    image: 'https://picsum.photos/300/450?random=10', 
-    category: 'Finance',
-    rating: 4.8,
-    students: 3400,
-    isPremium: false,
-    type: 'ebook',
-    description: 'Le guide ultime au format PDF. 250 pages de stratégies financières applicables immédiatement.',
-    status: 'published',
-    hostingMode: 'internal',
-    createdAt: '2023-08-10',
-    reviews: []
-  },
-  {
-    id: 'c2_pub',
-    title: 'Devenir Freelance en 30 Jours',
-    instructor: 'Digital Success Academy',
-    instructorId: 'v2',
+    id: 'c2',
+    title: 'Crypto Trading Avancé',
     price: 50000,
-    currency: 'XOF',
-    image: 'https://picsum.photos/400/250?random=22', 
-    category: 'Freelance',
+    instructor: 'Business Pro Académie',
+    instructorId: 'v2',
+    image: 'https://images.unsplash.com/photo-1518186285589-2f7649de83e0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+    category: 'Finance',
     rating: 0,
     students: 0,
     isPremium: true,
     type: 'course',
-    description: 'Une méthode pas à pas pour générer ses premiers revenus en ligne depuis l\'Afrique.',
-    status: 'published', // PUBLISHED IMMEDIATELY
-    hostingMode: 'external',
-    createdAt: '2023-10-25',
-    reviews: []
+    status: 'draft', // MOCKED AS PENDING REVIEW LOGICALLY
+    visibility: 'private', 
+    hostingMode: 'internal',
+    createdAt: new Date().toISOString(),
+    description: "Une formation complète pour comprendre le marché crypto. Attention, méthode agressive. Stratégies de Scalping et Day Trading sur Binance.",
+    modules: [
+      { id: 'm1', title: 'Les bases de la Blockchain', lessons: [] },
+      { id: 'm2', title: 'Analyse Technique', lessons: [] }
+    ]
   }
 ];
 
-export const liveSessions: LiveSession[] = [
-  {
-    id: 'live1',
-    creatorId: 'u1',
-    creatorName: siteConfig.adminName,
-    creatorAvatar: siteConfig.profilePicture,
-    status: 'live',
-    viewers: 1542,
-    likes: 850,
-    revenue: 125000,
-    config: {
-      title: "Masterclass: Les Secrets du E-commerce 2024",
-      description: "Session exclusive pour répondre à toutes vos questions.",
-      price: 0,
-      isPremium: false,
-      replayPolicy: 'public',
-      quality: '1080p',
-      chatEnabled: true,
-      streamSource: 'webcam'
+// --- CONTENT MODERATION SERVICE (NEW) ---
+export const contentService = {
+  getAllCourses: () => courses,
+  
+  getCourseById: (id: string) => courses.find(c => c.id === id),
+
+  updateCourseStatus: async (courseId: string, status: 'published' | 'draft' | 'banned', reason?: string) => {
+    const course = courses.find(c => c.id === courseId);
+    if (!course) return;
+
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    course.status = status;
+    
+    // Log action
+    adminLogs.unshift({
+      id: `al_${Date.now()}`,
+      adminName: 'Super Admin',
+      action: `course_${status}`,
+      details: `Cours "${course.title}" passé en statut : ${status}${reason ? ` (Raison: ${reason})` : ''}`,
+      timestamp: new Date().toISOString(),
+      ip: '127.0.0.1'
+    });
+
+    if (status === 'published') {
+      await notifyNewProduct(course.title); 
     }
-  },
-  {
-    id: 'live2',
-    creatorId: 'u2',
-    creatorName: 'Digital Success Academy',
-    creatorAvatar: 'https://picsum.photos/200/200?random=50',
-    status: 'ended',
-    viewers: 0,
-    likes: 420,
-    revenue: 50000,
-    config: {
-      title: "Coaching Privé : Analyse de Boutique",
-      description: "Replay disponible pour les étudiants.",
-      price: 5000,
-      isPremium: true,
-      replayPolicy: 'students_only',
-      quality: '720p',
-      chatEnabled: true,
-      streamSource: 'external',
-      externalStreamUrl: 'https://youtube.com/live/xxxx'
-    }
+    
+    return course;
   }
-];
+};
 
-export const newsItems: NewsItem[] = [
-  {
-    id: 'n1',
-    title: 'Nouveau record de vente ! 🚀',
-    content: "Félicitations à notre formateur Marc qui vient de dépasser les 500 000 FCFA de ventes cette semaine. La persévérance paie toujours. Rejoignez-nous pour atteindre les mêmes sommets.",
-    type: 'success_story',
-    date: '2023-11-05',
-    isPinned: true,
-    mediaUrl: 'https://picsum.photos/800/500?random=88'
-  },
-  {
-    id: 'n2',
-    title: 'Promotion Spéciale : Pack Freelance',
-    content: "Profitez de -50% sur toutes les formations de la catégorie Freelance jusqu'à ce dimanche. Code : FREELANCE50",
-    type: 'promotion',
-    date: '2023-11-04',
-    mediaUrl: 'https://picsum.photos/800/400?random=89'
-  },
-  {
-    id: 'n3',
-    title: 'Mise à jour de la plateforme',
-    content: "Nous avons intégré les paiements par Chariow et Flutterwave pour faciliter vos transactions internationales. Tout est désormais disponible dans vos paramètres vendeur.",
-    type: 'new_feature',
-    date: '2023-11-01',
-  }
-];
+export const liveSessions: LiveSession[] = [];
 
-export const mockAffiliateLinks: AffiliateLink[] = [
-  {
-    id: 'lnk1',
-    productId: 'c1',
-    productName: 'Leadership Absolu',
-    url: 'https://kadjolo.com/#/product/c1?ref=u1',
-    clicks: 1250,
-    conversions: 45,
-    commissionEarned: 202500,
-    isActive: true
-  },
-  {
-    id: 'lnk2',
-    productId: 'eb1',
-    productName: 'E-Book Richesse',
-    url: 'https://kadjolo.com/#/product/eb1?ref=u1',
-    clicks: 3400,
-    conversions: 120,
-    commissionEarned: 60000,
-    isActive: true
-  }
-];
+export const newsItems: NewsItem[] = [];
 
-export const mockMarketingAssets: MarketingAsset[] = [
-  {
-    id: 'ma1',
-    type: 'banner',
-    title: 'Bannière Carrée Promo',
-    url: 'https://picsum.photos/1080/1080?random=1',
-    format: '1080x1080',
-    downloadCount: 120
+export const mockAffiliateLinks: AffiliateLink[] = []; 
+
+export const mockMarketingAssets: MarketingAsset[] = [];
+
+// --- FINANCIAL SERVICE SIMULATION ---
+export const financialService = {
+  getCommissionRate: (vendorId: string) => {
+    const vendor = vendorProfiles.find(v => v.id === vendorId);
+    return vendor?.commissionRate || mockSiteSettings.commissionRate;
   },
-  {
-    id: 'ma2',
-    type: 'story',
-    title: 'Story Instagram Dynamique',
-    url: 'https://picsum.photos/1080/1920?random=2',
-    format: '9:16',
-    downloadCount: 85
+
+  processSale: (productName: string, amount: number, vendorId: string, paymentMethod: string, txId?: string) => {
+    const vendorIndex = vendorProfiles.findIndex(v => v.id === vendorId);
+    if (vendorIndex === -1) return;
+    const vendor = vendorProfiles[vendorIndex];
+
+    const rate = financialService.getCommissionRate(vendorId);
+    const commissionAmount = Math.round(amount * (rate / 100)); // AUTOMATIC 10% CALCULATION
+    const netAmount = amount - commissionAmount;
+
+    console.log(`[FINANCE] Traitement Vente: ${amount} | Comm (${rate}%): ${commissionAmount} | Net Vendeur: ${netAmount}`);
+    console.log(`[FINANCE CENTRALISEE] 100% des fonds (${amount}) encaissés par le Fondateur. Solde vendeur crédité virtuellement.`);
+
+    const newSale: Sale = {
+      id: `sale-${Date.now()}`,
+      studentName: 'Client Vérifié',
+      courseTitle: productName,
+      amount: amount,
+      vendorId: vendorId, // SET VENDOR ID
+      platformFee: commissionAmount,
+      netEarnings: netAmount,
+      currency: 'XOF',
+      date: new Date().toISOString().split('T')[0],
+      status: 'completed',
+      paymentMethod: paymentMethod,
+      transactionId: txId || `tx-${Math.random().toString(36).substr(2, 9)}`,
+    };
+
+    const newTransaction: Transaction = {
+      id: `tx-${Date.now()}`,
+      type: 'sale',
+      amount: amount,
+      feeAmount: commissionAmount,
+      netAmount: netAmount,
+      status: 'completed',
+      date: new Date().toISOString(),
+      description: `Vente: ${productName}`,
+      vendorId: vendorId,
+      paymentMethod: paymentMethod,
+      referenceId: txId
+    };
+
+    salesHistory.unshift(newSale);
+    mockTransactions.unshift(newTransaction);
+
+    vendorProfiles[vendorIndex] = {
+      ...vendor,
+      totalSales: (vendor.totalSales || 0) + 1,
+      totalRevenue: (vendor.totalRevenue || 0) + amount,
+      totalCommissionPaid: (vendor.totalCommissionPaid || 0) + commissionAmount,
+      walletBalance: (vendor.walletBalance || 0) + netAmount,
+    };
+    
+    // UPDATE GLOBAL STATS FOR CENTRALIZED TREASURY
+    adminGlobalStats.totalSalesVolume += amount; // Founder gets full cash
+    adminGlobalStats.totalPlatformRevenue += commissionAmount; // Net profit tracking
+
+    commissionRecords.unshift({
+       id: `comm_${Date.now()}`,
+       saleId: newSale.id,
+       courseTitle: productName,
+       vendorId: vendor.id,
+       vendorName: vendor.shopName,
+       totalAmount: amount,
+       adminAmount: commissionAmount,
+       vendorAmount: netAmount,
+       rateApplied: rate,
+       date: new Date().toISOString()
+    });
   },
-  {
-    id: 'ma3',
-    type: 'text',
-    title: 'Script Facebook Ads (Convertisseur)',
-    content: "🔥 STOP ! Ne scrollez pas plus loin. Si vous voulez doubler vos revenus en 30 jours, lisez ceci...",
-    format: 'Text',
-    url: '',
-    downloadCount: 230
+
+  // NEW: HANDLE WITHDRAWAL REQUEST AND NOTIFY
+  requestPayout: async (vendorId: string, amount: number, method: string, details: string) => {
+    const vendor = vendorProfiles.find(v => v.id === vendorId);
+    if (!vendor) return { success: false, message: "Vendeur introuvable" };
+
+    // Create Request
+    const newRequest: PayoutRequest = {
+        id: `pr_${Date.now()}`,
+        vendorId: vendor.id,
+        vendorName: vendor.shopName,
+        amount: amount,
+        method: method as any,
+        details: details,
+        requestDate: new Date().toISOString(),
+        status: 'pending',
+        feeDeducted: 0
+    };
+
+    payoutRequests.unshift(newRequest);
+    adminGlobalStats.pendingPayouts += 1;
+
+    // Trigger Notification
+    await notifyAdminPayoutRequest(vendor.shopName, amount, method);
+
+    // Log for Admin Dashboard
+    adminLogs.unshift({
+       id: `log_${Date.now()}`,
+       adminName: 'SYSTEM',
+       action: 'payout_request',
+       details: `Demande de retrait de ${amount} par ${vendor.shopName}`,
+       timestamp: new Date().toISOString(),
+       ip: '127.0.0.1'
+    });
+
+    return { success: true };
+  },
+
+  processPayout: (requestId: string, adminNote?: string, txRef?: string) => {
+    const reqIndex = payoutRequests.findIndex(r => r.id === requestId);
+    if (reqIndex === -1) return;
+    
+    const request = payoutRequests[reqIndex];
+    
+    payoutRequests[reqIndex] = {
+      ...request,
+      status: 'paid',
+      processedDate: new Date().toISOString(),
+      adminNote: adminNote,
+      transactionReference: txRef
+    };
+
+    const newTransaction: Transaction = {
+      id: `payout-${Date.now()}`,
+      type: 'payout',
+      amount: request.amount,
+      feeAmount: 0, 
+      netAmount: -request.amount,
+      status: 'completed',
+      date: new Date().toISOString(),
+      description: `Retrait vers ${request.details} (${request.method})`,
+      vendorId: request.vendorId,
+      referenceId: txRef
+    };
+    
+    mockTransactions.unshift(newTransaction);
+    
+    adminGlobalStats.pendingPayouts = Math.max(0, adminGlobalStats.pendingPayouts - 1);
+    
+    adminLogs.unshift({
+       id: `al_${Date.now()}`,
+       adminName: 'SYSTEM',
+       action: 'approved_payout',
+       details: `Retrait de ${request.amount} validé pour ${request.vendorName}`,
+       timestamp: new Date().toISOString(),
+       ip: '127.0.0.1'
+    });
   }
-];
+};

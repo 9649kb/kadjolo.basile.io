@@ -1,11 +1,23 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Facebook, Youtube, Instagram, Twitter, Mail, MapPin, Phone, ArrowRight, Shield, Globe } from 'lucide-react';
+import { Facebook, Youtube, Instagram, Twitter, Mail, MapPin, Phone, ArrowRight, Shield, Globe, Check, Loader } from 'lucide-react';
 import { siteConfig } from '../services/mockData';
+import { subscribeToNewsletter } from '../services/notificationService';
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success'>('idle');
+
+  const handleSubscribe = async () => {
+    if (!email || !email.includes('@')) return;
+    setStatus('loading');
+    await subscribeToNewsletter(email);
+    setStatus('success');
+    setEmail('');
+    setTimeout(() => setStatus('idle'), 3000);
+  };
 
   return (
     <footer className="bg-brand-black text-white pt-16 pb-8 border-t border-gray-800 mt-auto">
@@ -78,14 +90,28 @@ const Footer: React.FC = () => {
               Recevez mes conseils exclusifs chaque semaine. Pas de spam.
             </p>
             <div className="flex flex-col gap-2">
-              <input 
-                type="email" 
-                placeholder="Votre email professionnel" 
-                className="bg-gray-900 border border-gray-800 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-brand-blue text-sm"
-              />
-              <button className="bg-brand-blue hover:bg-blue-600 text-white px-4 py-3 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-blue-900/30">
-                S'inscrire
-              </button>
+              {status === 'success' ? (
+                <div className="bg-green-900/30 border border-green-800 text-green-400 px-4 py-3 rounded-lg text-sm flex items-center gap-2 animate-in fade-in">
+                  <Check size={16} /> Inscription réussie !
+                </div>
+              ) : (
+                <>
+                  <input 
+                    type="email" 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="Votre email professionnel" 
+                    className="bg-gray-900 border border-gray-800 text-white px-4 py-3 rounded-lg focus:outline-none focus:border-brand-blue text-sm"
+                  />
+                  <button 
+                    onClick={handleSubscribe}
+                    disabled={status === 'loading' || !email}
+                    className="bg-brand-blue hover:bg-blue-600 text-white px-4 py-3 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-blue-900/30 flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {status === 'loading' ? <Loader size={16} className="animate-spin" /> : 'S\'inscrire'}
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

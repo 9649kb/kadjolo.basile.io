@@ -1,13 +1,14 @@
 
-
 import React, { useState } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Home from './pages/Home';
 import Community from './pages/Community';
 import LiveStream from './pages/LiveStream';
 import Marketplace from './pages/Marketplace';
 import CreatorStudio from './pages/CreatorStudio';
+import StudentDashboard from './pages/StudentDashboard';
+import AdminDashboard from './pages/AdminDashboard'; // IMPORTED
 import Blog from './pages/Blog';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -15,8 +16,36 @@ import YouTubePage from './pages/YouTubePage';
 import ProductLanding from './pages/ProductLanding';
 import LegalPage from './pages/LegalPage';
 import News from './pages/News';
+import VendorShop from './pages/VendorShop';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import { MessageSquare, X } from 'lucide-react';
 import { generateAIResponse } from './services/geminiService';
+import { UserProvider, useUser } from './contexts/UserContext';
+
+// Protected Route Component (Standard)
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useUser();
+  const location = useLocation();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
+};
+
+// ADMIN ROUTE COMPONENT (New)
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useUser();
+  
+  // Must be logged in AND be Founder/Admin
+  if (!user || (!user.isFounder && user.role !== 'admin')) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 // AI Chat Widget Component
 const AIChatWidget = () => {
@@ -104,40 +133,61 @@ const AIChatWidget = () => {
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <Layout>
+    <UserProvider>
+      <Router>
         <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/news" element={<News />} />
-          <Route path="/community" element={<Community />} />
-          <Route path="/live" element={<LiveStream />} />
-          <Route path="/courses" element={<Marketplace />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-          
-          {/* Landing Page for Ads - Clean URL */}
-          <Route path="/product/:id" element={<ProductLanding />} />
-          <Route path="/courses/:id" element={<ProductLanding />} />
-          
-          {/* SaaS Interface */}
-          <Route path="/creator-studio" element={<CreatorStudio />} />
-          
-          {/* Blog & Static */}
-          <Route path="/blog" element={<Blog />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/youtube" element={<YouTubePage />} />
-          
-          {/* Legal Pages for Ads Compliance */}
-          <Route path="/privacy" element={<LegalPage type="privacy" />} />
-          <Route path="/terms" element={<LegalPage type="terms" />} />
-          <Route path="/legal" element={<LegalPage type="legal" />} />
-          <Route path="/refund" element={<LegalPage type="refund" />} />
+          {/* Dedicated Admin Layout/Route (No standard Layout wrapper) */}
+          <Route path="/admin" element={
+            <AdminRoute>
+              <AdminDashboard />
+            </AdminRoute>
+          } />
 
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Standard Layout Routes */}
+          <Route path="*" element={
+            <Layout>
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/youtube" element={<YouTubePage />} />
+                
+                {/* Auth Routes */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                
+                {/* Landing Pages */}
+                <Route path="/product/:id" element={<ProductLanding />} />
+                <Route path="/courses/:id" element={<ProductLanding />} />
+                <Route path="/shop/:id" element={<VendorShop />} />
+                
+                {/* Legal Pages */}
+                <Route path="/privacy" element={<LegalPage type="privacy" />} />
+                <Route path="/terms" element={<LegalPage type="terms" />} />
+                <Route path="/legal" element={<LegalPage type="legal" />} />
+                <Route path="/refund" element={<LegalPage type="refund" />} />
+
+                {/* Public Access */}
+                <Route path="/news" element={<News />} />
+                <Route path="/community" element={<Community />} />
+                <Route path="/live" element={<LiveStream />} />
+                <Route path="/courses" element={<Marketplace />} />
+                <Route path="/marketplace" element={<Marketplace />} />
+
+                {/* Protected Routes */}
+                <Route path="/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+                <Route path="/creator-studio" element={<ProtectedRoute><CreatorStudio /></ProtectedRoute>} />
+
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Layout>
+          } />
         </Routes>
-      </Layout>
-      <AIChatWidget />
-    </Router>
+        <AIChatWidget />
+      </Router>
+    </UserProvider>
   );
 };
 

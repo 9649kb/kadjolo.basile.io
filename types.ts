@@ -26,40 +26,136 @@ export interface PaymentMethodConfig {
   name: string; 
   type: 'mobile_money' | 'card' | 'crypto' | 'bank' | 'paypal' | 'manual';
   integrationMode: 'manual' | 'api_simulated' | 'redirect_link'; 
-  
   logoUrl?: string; 
   color?: string; 
   textColor?: string;
-  
   isActive: boolean;
   instructions?: string; 
   requiresProof?: boolean; 
-  
   redirectUrl?: string; 
-  
-  // Secure Credentials (usually not sent to front-end in full, but needed for admin edit)
   apiConfig?: {
     publicKey?: string;
-    secretKey?: string; // Admin only
+    secretKey?: string;
     merchantId?: string;
     environment?: 'sandbox' | 'production';
-    webhookSecret?: string; // Admin only
+    webhookSecret?: string;
   };
-  
   providerCode?: string; 
 }
 
-// NEW: Reward Rule Interface
+export interface AppNotification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  isRead: boolean;
+  createdAt: string;
+  link?: string;
+}
+
+export type AutomationTrigger = 'sale_created' | 'course_completed' | 'cart_abandoned' | 'new_lead';
+export type AutomationAction = 'send_email' | 'add_tag' | 'send_coupon' | 'grant_access' | 'issue_certificate';
+
+export interface WorkflowRule {
+  id: string;
+  name: string;
+  trigger: AutomationTrigger;
+  action: AutomationAction;
+  targetId?: string; 
+  isActive: boolean;
+  executionCount: number;
+}
+
 export interface RewardRule {
   id: string;
   name: string;
   description: string;
-  type: 'revenue' | 'sales_count'; // Condition type
-  threshold: number; // The value to reach (e.g. 1,000,000 FCFA)
-  rewardType: 'bonus_cash' | 'gift_physical' | 'badge_vip';
-  rewardValue: string | number; // e.g., "50000" (cash) or "iPhone 15" (gift)
+  type: 'revenue' | 'sales_count'; 
+  threshold: number; 
+  rewardType: 'bonus_cash' | 'fixed' | 'gift_physical' | 'badge_vip';
+  rewardValue: string | number;
   icon: string;
   color: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  userId: string;
+  action: string;
+  timestamp: string;
+  details?: string;
+}
+
+export interface SupportTicket {
+  id: string;
+  userId: string;
+  subject: string;
+  status: 'open' | 'closed' | 'pending';
+  createdAt: string;
+}
+
+export interface CreatorStats {
+  totalRevenue: number;
+  totalSales: number;
+  activeStudents: number;
+}
+
+export interface AffiliateLink {
+  id: string;
+  userId: string;
+  courseId: string;
+  code: string;
+  clicks: number;
+  sales: number;
+}
+
+export interface MarketingAsset {
+  id: string;
+  name: string;
+  url: string;
+  type: 'image' | 'video' | 'document';
+}
+
+export interface SiteSettings {
+  siteName: string;
+  contactEmail: string;
+  maintenanceMode: boolean;
+}
+
+export interface AdminReport {
+  id: string;
+  title: string;
+  generatedAt: string;
+  data: any;
+}
+
+export interface SystemLog {
+  id: string;
+  level: 'info' | 'warn' | 'error';
+  message: string;
+  timestamp: string;
+}
+
+export interface AdminLog {
+  id: string;
+  adminName: string;
+  action: string;
+  details: string;
+  timestamp: string;
+}
+
+export interface CommissionRecord {
+  id: string;
+  saleId: string;
+  courseTitle: string;
+  vendorId: string;
+  vendorName: string;
+  totalAmount: number;
+  adminAmount: number;
+  vendorAmount: number;
+  rateApplied: number;
+  date: string;
 }
 
 export interface VendorProfile {
@@ -76,7 +172,6 @@ export interface VendorProfile {
   status: 'active' | 'suspended' | 'blocked'; 
   commissionRate: number; 
   canStream?: boolean; 
-  
   walletBalance: number; 
   pendingBalance: number; 
   totalRevenue: number; 
@@ -84,13 +179,10 @@ export interface VendorProfile {
   totalSales?: number;
   kycStatus: 'pending' | 'verified' | 'rejected';
   withdrawalSettings?: VendorWithdrawalSettings;
-  
   facebookPixelId?: string; 
   themeConfig?: VendorThemeConfig; 
   activityLogs?: ActivityLog[];
-  
-  // NEW: Track rewards received
-  receivedRewards?: string[]; // IDs of rewards already claimed
+  receivedRewards?: string[];
 }
 
 export interface VendorThemeConfig {
@@ -112,12 +204,12 @@ export interface VendorWithdrawalSettings {
 export interface Course {
   id: string;
   title: string;
-  subtitle?: string; // NEW
+  subtitle?: string;
   instructor: string;
   instructorId?: string; 
   price: number;
   promoPrice?: number;
-  currency?: 'EUR' | 'USD' | 'XOF';
+  currency?: 'EUR' | 'XOF' | 'USD';
   image: string;
   additionalImages?: string[];
   category: string;
@@ -125,12 +217,14 @@ export interface Course {
   rating: number;
   students: number;
   isPremium: boolean;
-  type: 'course' | 'ebook'; 
+  type: 'course' | 'ebook' | 'service'; 
   description?: string; 
   shortDescription?: string; 
   reviews?: Review[];
-  
-  // Content Logic
+  learningObjectives?: string[];
+  requirements?: string[];
+  targetAudience?: string[];
+  features?: string[];
   contentUrl?: string; 
   modules?: Module[]; 
   level?: 'beginner' | 'intermediate' | 'expert';
@@ -138,52 +232,37 @@ export interface Course {
   skills?: string[];
   tags?: string[];
   language?: string; 
-  
-  // Admin/System
   status: 'draft' | 'published' | 'deleted' | 'banned' | 'private' | 'scheduled' | 'archived'; 
-  visibility: 'public' | 'private' | 'unlisted'; // NEW
+  visibility: 'public' | 'private' | 'unlisted';
   scheduledDate?: string; 
-  
-  // Hosting
   hostingMode: 'internal' | 'external'; 
   externalSalesPageUrl?: string; 
-  
-  // Media Configuration (NEW)
   mediaConfig?: {
     videoUrl?: string;
     videoType?: 'upload' | 'youtube' | 'vimeo' | 'external_link';
     pdfUrl?: string;
     previewImage?: string;
   };
-
-  // Versioning (NEW)
-  version?: number;
-  lastModified?: string;
-
   createdAt: string;
   updatedAt?: string;
-  
   seo?: SEOConfig; 
-  seoScore?: number; 
-  
   affiliateEnabled?: boolean;
   affiliateCommission?: number; 
-
-  stats?: {
-    views: number;
-    clicks: number;
-    sales: number;
-    trafficSources: { source: 'facebook' | 'google' | 'tiktok' | 'direct'; count: number }[];
-  };
+  files?: any[];
+  faq?: any[];
+  customFields?: any[]; 
+  bannerUrl?: string;
+  settings?: any;
+  pricingModel?: string;
 }
 
 export interface Sale {
   id: string;
   studentName: string;
-  studentEmail?: string; // NEW
+  studentEmail?: string;
   courseTitle: string;
-  courseId?: string; // NEW
-  vendorId?: string; // ADDED for filtering
+  courseId?: string;
+  vendorId?: string;
   amount: number;
   platformFee: number; 
   netEarnings: number; 
@@ -191,10 +270,7 @@ export interface Sale {
   date: string;
   status: 'completed' | 'pending' | 'refunded' | 'verifying'; 
   paymentMethod: string;
-  paymentProvider?: string; 
   transactionId?: string;
-  proofUrl?: string; 
-  source?: string; 
 }
 
 export interface PayoutRequest {
@@ -204,27 +280,21 @@ export interface PayoutRequest {
   amount: number;
   method: PaymentMethodType;
   details: string; 
-  bankDetails?: string; 
-  mobileMoneyNumber?: string; 
   requestDate: string;
-  processedDate?: string;
   status: PayoutStatus;
-  adminNote?: string; 
-  transactionReference?: string; 
   feeDeducted: number; 
+  processedDate?: string;
+  adminNote?: string;
+  transactionReference?: string;
 }
 
-// ... Keep existing interfaces ...
 export interface Lesson {
   id: string;
   title: string;
   type: 'video' | 'audio' | 'pdf' | 'link' | 'zip' | 'quiz';
   contentUrl: string;
-  isExternal?: boolean;
   duration?: string;
-  isPreview?: boolean;
-  hostingType?: 'internal' | 'external';
-  fileSize?: string;
+  hostingType?: 'internal' | 'external' | 'youtube' | 'vimeo' | 'upload';
 }
 
 export interface Module {
@@ -236,19 +306,67 @@ export interface Module {
 export interface SEOConfig {
   metaTitle: string;
   metaDescription: string;
-  ogImage?: string;
-  keywords?: string[];
 }
 
 export interface Review {
   id: string;
-  userId: string;
-  userName: string;
-  userAvatar: string;
   rating: number;
   comment: string;
   date: string;
-  reply?: string;
+  authorName?: string;
+  courseTitle?: string;
+  isReplied?: boolean;
+  replyText?: string;
+}
+
+export interface Transaction {
+  id: string;
+  type: 'sale' | 'payout' | 'refund' | 'commission_fee' | 'withdrawal';
+  amount: number; 
+  feeAmount?: number;
+  netAmount?: number;
+  status: 'completed' | 'pending' | 'failed' | 'processing';
+  date: string;
+  description: string;
+  vendorId: string;
+  paymentMethod?: string;
+  referenceId?: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  user: string;
+  text: string;
+  timestamp: string;
+  avatar?: string;
+  isSender?: boolean;
+  isModerator?: boolean;
+}
+
+export type PayoutStatus = 'pending' | 'processing' | 'paid' | 'rejected';
+export type PaymentMethodType = 'mobile_money' | 'card' | 'crypto' | 'bank' | 'paypal' | 'manual';
+
+export interface TextStyle {
+  color?: string;
+  fontFamily?: 'sans' | 'serif' | 'mono';
+}
+
+export interface Post {
+  id: string;
+  author: User;
+  content: string;
+  likes: number;
+  comments: number;
+  timestamp: string;
+  likedByMe: boolean;
+  image?: string;
+  audioUrl?: string;
+  attachmentType?: 'image' | 'audio' | 'file';
+  attachmentUrl?: string;
+  style?: TextStyle;
+  isPinned?: boolean;
+  isQuestion?: boolean;
+  isEdited?: boolean;
 }
 
 export interface Testimonial {
@@ -258,53 +376,21 @@ export interface Testimonial {
   content: string;
   avatar: string;
   rating: number;
-  used?: boolean;
+  status?: 'pending' | 'approved' | 'rejected';
+  date?: string;
 }
 
-export interface Transaction {
+export interface ContactMessage {
   id: string;
-  type: 'sale' | 'payout' | 'refund' | 'commission_fee';
-  amount: number; 
-  netAmount?: number; 
-  feeAmount?: number; 
-  status: 'completed' | 'pending' | 'failed';
+  senderId?: string; 
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
   date: string;
-  description: string;
-  vendorId: string;
-  paymentMethod?: string;
-  referenceId?: string; 
-}
-
-export interface SupportTicket {
-  id: string;
-  studentName: string;
-  studentAvatar: string;
-  lastMessage: string;
-  unreadCount: number;
-  status: 'open' | 'resolved';
-  timestamp: string;
-  messages: ChatMessage[];
-}
-
-export interface ChatMessage {
-  id: string;
-  user: string;
-  avatar?: string;
-  text: string;
-  timestamp: string;
-  isSender?: boolean;
-  attachment?: { type: 'image' | 'file' | 'audio'; url: string; name: string };
-  isModerator?: boolean;
-}
-
-export interface CreatorStats {
-  totalSales: number;
-  revenue: number;
-  commissionPaid: number;
-  students: number;
-  monthlyGrowth: number;
-  conversionRate: number;
-  totalClicks?: number; 
+  isRead: boolean;
+  replyText?: string;
+  attachmentUrl?: string; 
 }
 
 export interface AdminGlobalStats {
@@ -316,182 +402,112 @@ export interface AdminGlobalStats {
   pendingPayouts: number;
 }
 
-export interface AdminReport {
-  date: string;
-  sales: number;
-  commission: number;
-  payouts: number;
-}
-
-export interface Notification {
-  id: string;
-  type: 'email' | 'system';
-  message: string;
-  timestamp: string;
-  read: boolean;
-}
-
-export type StreamQuality = '1080p' | '720p' | '480p' | '360p';
-export type StreamSource = 'webcam' | 'external';
-
-export interface LiveConfig {
-  title: string;
-  description: string;
-  thumbnail?: string;
-  price: number; 
-  isPremium: boolean;
-  replayPolicy: 'public' | 'private' | 'students_only';
-  quality: StreamQuality;
-  chatEnabled: boolean;
-  streamSource: StreamSource;
-  externalStreamUrl?: string;
-  guestInviteEnabled?: boolean;
-  guestLink?: string;
-}
-
 export interface LiveSession {
   id: string;
   creatorId: string;
   creatorName: string;
   creatorAvatar: string;
-  config: LiveConfig;
-  status: 'scheduled' | 'live' | 'ended';
+  status: 'live' | 'ended';
   viewers: number;
   likes: number;
-  startedAt?: string;
-  endedAt?: string;
-  revenue?: number;
+  config: LiveConfig;
   activeProductId?: string;
 }
 
-export interface YouTubeVideo {
-  id: string;
+export interface LiveConfig {
   title: string;
-  thumbnail: string;
-  publishedAt: string;
-  url: string;
-  views?: string;
+  description: string;
+  price: number;
+  isPremium: boolean;
+  replayPolicy: string;
+  quality: string;
+  chatEnabled: boolean;
+  streamSource: 'webcam' | 'external';
+  guestInviteEnabled: boolean;
+  externalStreamUrl?: string;
 }
-
-export type NewsType = 'success_story' | 'announcement' | 'promotion' | 'new_feature' | 'info' | 'vendor_news' | 'press_release';
 
 export interface NewsItem {
   id: string;
   title: string;
   content: string;
   type: NewsType;
-  mediaUrl?: string;
   date: string;
-  isPinned?: boolean;
+  mediaUrl?: string;
+  isPinned: boolean;
   source?: string;
   externalLink?: string;
 }
 
-export interface AffiliateLink {
-  id: string;
-  productId: string;
-  productName: string;
-  url: string;
-  clicks: number;
-  conversions: number;
-  commissionEarned: number;
-  isActive: boolean;
-}
-
-export interface MarketingAsset {
-  id: string;
-  type: 'banner' | 'video' | 'text' | 'story';
-  title: string;
-  url: string;
-  content?: string;
-  format?: '1080x1080' | '9:16' | 'Text';
-  downloadCount: number;
-}
-
-export interface AdminPaymentAccount {
-  id: string;
-  methodName: string; 
-  details: string; 
-  isActive: boolean;
-  type: 'crypto' | 'bank' | 'mobile' | 'card' | 'other';
-}
-
-export interface SiteSettings {
-  siteName: string;
-  commissionRate: number; 
-  currency: 'XOF' | 'EUR' | 'USD';
-  maintenanceMode: boolean;
-  allowNewRegistrations: boolean;
-  autoApproveCourses: boolean;
-  supportEmail: string;
-  adminPaymentAccounts?: AdminPaymentAccount[]; 
-}
-
-export interface Post {
-  id: string;
-  author: User;
-  content: string;
-  image?: string;
-  audioUrl?: string;
-  attachmentUrl?: string;
-  attachmentType?: 'image' | 'file' | 'audio';
-  likes: number;
-  comments: number;
-  timestamp: string;
-  likedByMe?: boolean;
-}
+export type NewsType = 'press_release' | 'announcement' | 'success_story' | 'promotion' | 'new_feature';
 
 export interface Coupon {
   id: string;
   code: string;
   discountType: 'percentage' | 'fixed';
   discountValue: number;
-  vendorId: string;
-  maxUses?: number;
-  usedCount: number;
-  expiresAt?: string;
   isActive: boolean;
 }
 
-export type PayoutStatus = 'pending' | 'processing' | 'paid' | 'rejected';
-export type PaymentMethodType = 'mobile_money' | 'card' | 'crypto' | 'bank' | 'paypal' | 'manual';
-export type PaymentIntegrationMode = 'manual' | 'api_simulated' | 'redirect_link';
-
-export interface CommissionRecord {
+export interface Popup {
   id: string;
-  saleId: string;
-  courseTitle: string;
-  vendorId: string;
-  vendorName: string;
-  totalAmount: number;
-  adminAmount: number; 
-  vendorAmount: number; 
-  rateApplied: number;
-  date: string;
-}
-
-export interface ActivityLog {
-  id: string;
-  action: string;
-  details: string;
-  timestamp: string;
-  ip?: string;
-}
-
-export interface AdminLog {
-  id: string;
-  adminName: string;
-  action: string;
-  targetId?: string;
-  details: string;
-  timestamp: string;
-  ip: string;
-}
-
-export interface SystemLog {
-  id: string;
-  level: 'info' | 'warning' | 'error';
+  name: string;
+  title: string;
   message: string;
-  user: string;
-  timestamp: string;
+  ctaText: string;
+  ctaUrl: string;
+  trigger: 'load' | 'exit' | 'scroll' | 'delay';
+  delaySeconds: number;
+  isActive: boolean;
+  backgroundColor: string;
+  textColor: string;
+}
+
+export interface Banner {
+  id: string;
+  name: string;
+  text: string;
+  ctaText: string;
+  ctaUrl: string;
+  isActive: boolean;
+  backgroundColor: string;
+  textColor: string;
+  startDate?: string;
+  endDate?: string;
+  targetSpecificProducts?: boolean;
+  selectedProductIds?: string[];
+  hasDisplayDelay?: boolean;
+  displayDelaySeconds?: number;
+  hasFrequencyLimit?: boolean;
+  frequency?: 'always' | 'once_per_visit' | 'once_per_day';
+  hasDeviceTargeting?: boolean;
+  targetedDevices?: ('mobile' | 'desktop')[];
+  hasPageTargeting?: boolean;
+  targetedPageIds?: string[];
+  hasGeoTargeting?: boolean;
+  targetedCountries?: string[];
+  hasLanguageTargeting?: boolean;
+  targetedLanguages?: string[];
+  hasActivationPeriod?: boolean;
+}
+
+export interface Campaign {
+  id: string;
+  name: string;
+  source: string;
+  trackingLink: string;
+  isActive: boolean;
+  clicks: number;
+  sales: number;
+  revenue: number;
+  createdAt: string;
+}
+
+export interface YouTubeVideo {
+  id: string;
+  title: string;
+  thumbnail: string;
+  views: string;
+  publishedAt: string;
+  url: string;
 }

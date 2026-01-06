@@ -1,143 +1,105 @@
 
 import React from 'react';
-import { ArrowRight, Star, PlayCircle, Users, CheckCircle } from 'lucide-react';
+import { ArrowRight, MessageSquare, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { courses, posts, siteConfig } from '../services/mockData';
 
 const Home: React.FC = () => {
   return (
-    <div className="space-y-16">
-      {/* Hero Section - BLUE AND WHITE THEME */}
-      <section className="relative rounded-3xl overflow-hidden bg-brand-blue text-white shadow-2xl">
-        {/* Abstract Background Shapes */}
-        <div className="absolute top-0 right-0 w-2/3 h-full bg-white skew-x-12 transform translate-x-20 opacity-10"></div>
-        <div className="absolute bottom-0 left-0 w-1/2 h-full bg-blue-800 skew-x-12 transform -translate-x-20 opacity-50"></div>
-        
-        <div className="relative z-20 flex flex-col md:flex-row items-center py-12 md:py-20">
-          <div className="p-8 md:px-16 w-full text-center md:text-left">
-            <div className="flex justify-center md:justify-start">
-              <span className="inline-block px-4 py-1 bg-white text-brand-blue text-xs font-bold rounded-full mb-6 tracking-wide shadow-sm">
-                PLATEFORME OFFICIELLE
+    <div className="space-y-12 pb-20">
+      {/* Hero Section - Style Exact Capture d'Écran avec Animations Bouclées */}
+      <section className="relative mx-auto max-w-[1400px]">
+        <div className="bg-gradient-to-br from-blue-600 to-blue-700 rounded-[40px] p-10 md:p-24 min-h-[650px] flex flex-col justify-center text-white relative overflow-hidden shadow-2xl">
+          
+          {/* Éléments de design en arrière-plan (Subtiles rayons lumineux) */}
+          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_70%_30%,rgba(255,255,255,0.15)_0%,transparent_50%)] pointer-events-none"></div>
+          
+          <div className="relative z-10 max-w-4xl space-y-10">
+            {/* Badge Supérieur - ANIMÉ EN BOUCLE (Glow) */}
+            <div className="animate-in fade-in slide-in-from-top-4 duration-700">
+              <span className="inline-block px-5 py-2 bg-white text-blue-600 text-[10px] font-black rounded-full tracking-[0.2em] uppercase shadow-lg animate-glow-pulse border border-white/50 cursor-default">
+                Plateforme Officielle
               </span>
             </div>
-            <h1 className="font-serif text-4xl md:text-7xl font-bold mb-6 leading-tight max-w-4xl mx-auto md:mx-0">
-              {siteConfig.heroText.title}
+
+            {/* Titre de l'image */}
+            <h1 className="text-5xl md:text-8xl font-black tracking-tight leading-tight animate-in fade-in slide-in-from-bottom-8 duration-1000 delay-200">
+              Révélez votre <br />
+              <span className="text-white">Potentiel.</span>
             </h1>
-            <p className="text-blue-100 text-base md:text-lg mb-8 leading-relaxed max-w-2xl mx-auto md:mx-0">
-              {siteConfig.heroText.description}
+
+            {/* Texte de description de l'image */}
+            <p className="text-blue-50/90 text-lg md:text-2xl leading-relaxed max-w-2xl font-medium animate-in fade-in duration-1000 delay-400">
+              Bienvenue sur l'espace officiel de KADJOLO BASILE. Formations d'élite, communauté privée et ressources exclusives pour entrepreneurs ambitieux.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center md:justify-start">
-              <Link to="/courses" className="px-8 py-4 bg-white text-brand-blue font-bold rounded-lg transition-transform hover:scale-105 flex items-center justify-center shadow-lg hover:shadow-xl">
-                Accéder aux Ressources
-                <ArrowRight className="ml-2 w-5 h-5" />
+
+            {/* Boutons d'action - "Accéder aux Ressources" ANIMÉ EN BOUCLE */}
+            <div className="flex flex-col sm:flex-row items-center gap-6 pt-6 animate-in fade-in slide-in-from-bottom-12 duration-1000 delay-600">
+              <Link 
+                to="/courses" 
+                className="w-full sm:w-auto bg-white text-blue-600 px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-wider flex items-center justify-center gap-3 shadow-2xl hover:scale-105 transition-transform animate-float ring-4 ring-white/10"
+              >
+                Accéder aux Ressources <ArrowRight size={20} className="animate-pulse" />
               </Link>
-              <Link to="/community" className="px-8 py-4 bg-blue-700 hover:bg-blue-800 text-white font-medium rounded-lg transition-colors border border-blue-600 flex items-center justify-center">
+              
+              <Link 
+                to="/community" 
+                className="w-full sm:w-auto bg-white/10 backdrop-blur-md border border-white/20 text-white px-10 py-5 rounded-2xl font-black text-sm uppercase tracking-wider flex items-center justify-center hover:bg-white/20 transition-all"
+              >
                 Rejoindre le Groupe
               </Link>
             </div>
-            <div className="mt-8 flex items-center justify-center md:justify-start gap-4 text-sm text-blue-200">
-              <div className="flex -space-x-2">
+
+            {/* Social Proof Line */}
+            <div className="flex items-center gap-4 pt-8 animate-in fade-in duration-1000 delay-800">
+              <div className="flex -space-x-3">
                 {[1,2,3,4].map(i => (
-                  <div key={i} className="w-8 h-8 rounded-full bg-blue-400 border-2 border-brand-blue" />
+                  <div key={i} className="w-10 h-10 rounded-full border-2 border-blue-600 bg-blue-400 flex items-center justify-center overflow-hidden shadow-md">
+                    <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="leader" />
+                  </div>
                 ))}
               </div>
-              <p>Rejoint par +15,000 leaders</p>
+              <p className="text-blue-100 text-sm font-bold opacity-80">
+                Rejoint par +15,000 leaders
+              </p>
             </div>
           </div>
-          {/* Photo removed as requested */}
+
+          {/* Floating Help Widget - Bas à droite du Hero */}
+          <div className="absolute bottom-10 right-10 hidden md:flex items-center gap-3 bg-white/10 backdrop-blur-xl border border-white/20 px-6 py-4 rounded-3xl cursor-pointer hover:bg-white/20 transition-all group animate-float" style={{ animationDelay: '1s' }}>
+            <div className="p-2 bg-white rounded-xl text-blue-600 shadow-lg group-hover:scale-110 transition-transform">
+              <MessageSquare size={20} fill="currentColor" className="text-blue-600" />
+            </div>
+            <span className="text-sm font-black uppercase tracking-widest">Besoin d'aide ?</span>
+          </div>
         </div>
       </section>
 
-      {/* Stats Section - Clean White */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Stats Rapides - Section Complémentaire Professionnelle */}
+      <section className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 py-10">
         {[
-          { label: 'Membres Actifs', val: '15K+', icon: <Users className="text-brand-blue" /> },
-          { label: 'Formations', val: '45+', icon: <PlayCircle className="text-brand-blue" /> },
-          { label: 'Satisfaction', val: '98%', icon: <Star className="text-brand-green" /> },
-          { label: 'Pays', val: '22', icon: <CheckCircle className="text-brand-black" /> },
+          { label: 'Formations d\'élite', val: '45+', color: 'text-blue-600' },
+          { label: 'Mentorat Privé', val: '24/7', color: 'text-green-600' },
+          { label: 'Pays représentés', val: '22', color: 'text-blue-600' },
+          { label: 'Taux de réussite', val: '98%', color: 'text-blue-600' },
         ].map((stat, idx) => (
-          <div key={idx} className="bg-white p-6 md:p-8 rounded-2xl shadow-sm border-l-4 border-brand-blue flex flex-col items-center text-center hover:translate-y-[-5px] transition-transform duration-300">
-            <div className="mb-3 p-3 bg-blue-50 rounded-full">{stat.icon}</div>
-            <h3 className="text-2xl md:text-3xl font-bold text-brand-black">{stat.val}</h3>
-            <p className="text-xs md:text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">{stat.label}</p>
+          <div key={idx} className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 text-center hover:shadow-xl transition-all group">
+            <h3 className={`text-3xl font-black ${stat.color} mb-1`}>{stat.val}</h3>
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{stat.label}</p>
           </div>
         ))}
       </section>
 
-      {/* Featured Courses */}
-      <section>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-8 border-b border-gray-200 pb-4 gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-brand-blue font-serif">Formations à la une</h2>
-            <p className="text-gray-500 mt-1">Investissez en vous-même avec nos meilleurs programmes.</p>
-          </div>
-          <Link to="/courses" className="px-4 py-2 bg-gray-100 text-brand-black rounded hover:bg-gray-200 font-medium transition-colors text-sm">
-            Voir tout le catalogue
-          </Link>
-        </div>
-        <div className="grid md:grid-cols-3 gap-8">
-          {courses.slice(0, 3).map(course => (
-            <div key={course.id} className="group bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col">
-              <div className="relative h-56 overflow-hidden">
-                <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-t from-black/60 to-transparent"></div>
-                <div className="absolute top-3 left-3 bg-brand-blue text-white px-3 py-1 rounded-full text-xs font-bold shadow-md">
-                  {course.category}
-                </div>
-                <div className="absolute bottom-3 left-3 text-white">
-                   <p className="text-xs opacity-90">Par {course.instructor}</p>
-                </div>
-              </div>
-              <div className="p-6 flex-1 flex flex-col">
-                <h3 className="font-bold text-xl mb-2 text-brand-black leading-tight group-hover:text-brand-blue transition-colors">
-                  {course.title}
-                </h3>
-                <div className="flex items-center gap-2 mb-4">
-                   <div className="flex text-yellow-400">
-                     {[...Array(5)].map((_,i) => <Star key={i} size={14} fill={i < Math.floor(course.rating) ? "currentColor" : "none"} />)}
-                   </div>
-                   <span className="text-xs text-gray-500">({course.students} avis)</span>
-                </div>
-                <div className="flex items-center justify-between pt-4 border-t border-gray-100 mt-auto">
-                  <span className="text-2xl font-bold text-brand-blue">{course.price}€</span>
-                  <button className="px-6 py-2 bg-brand-black text-white text-sm font-bold rounded-lg hover:bg-blue-900 transition-colors shadow-lg shadow-blue-900/10">
-                    Découvrir
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Latest News */}
-      <section className="bg-gradient-to-br from-white to-blue-50 rounded-3xl p-6 md:p-10 shadow-lg border border-blue-100">
-        <div className="flex items-center gap-4 mb-8">
-           <div className="w-2 h-10 bg-brand-blue rounded-full"></div>
-           <h2 className="text-2xl md:text-3xl font-bold text-brand-black font-serif">Actualités de la Communauté</h2>
-        </div>
-        <div className="grid md:grid-cols-2 gap-8">
-          {posts.slice(0, 2).map(post => (
-            <div key={post.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-brand-blue transition-colors group">
-              <div className="flex gap-4 items-start">
-                <img src={post.author.avatar} alt={post.author.name} className="w-14 h-14 rounded-full object-cover ring-4 ring-gray-50 group-hover:ring-blue-100 transition-all shrink-0" />
-                <div>
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <h4 className="font-bold text-lg text-brand-black">{post.author.name}</h4>
-                    <span className="bg-blue-100 text-brand-blue text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Membre</span>
-                  </div>
-                  <p className="text-sm text-gray-400 mb-3">{post.timestamp}</p>
-                  <p className="text-gray-700 italic">"{post.content}"</p>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-        <div className="mt-8 text-center">
-           <Link to="/community" className="inline-flex items-center text-brand-blue font-bold hover:underline">
-             Voir toutes les actualités <ArrowRight size={16} className="ml-1" />
-           </Link>
-        </div>
+      {/* Call to Action Final */}
+      <section className="max-w-4xl mx-auto px-6 text-center py-20">
+        <h2 className="text-4xl md:text-6xl font-black text-brand-black mb-8 tracking-tighter">
+          Prêt à <span className="text-blue-600">changer d'échelle</span> ?
+        </h2>
+        <p className="text-gray-500 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed font-medium">
+          Ne laissez plus votre avenir au hasard. Appliquez les méthodes qui ont déjà transformé des milliers de carrières.
+        </p>
+        <Link to="/register" className="bg-brand-black text-white px-12 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl hover:scale-105 transition-transform inline-block">
+          Démarrer mon Ascension
+        </Link>
       </section>
     </div>
   );

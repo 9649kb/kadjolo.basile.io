@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
@@ -8,7 +7,7 @@ import LiveStream from './pages/LiveStream';
 import Marketplace from './pages/Marketplace';
 import CreatorStudio from './pages/CreatorStudio';
 import StudentDashboard from './pages/StudentDashboard';
-import AdminDashboard from './pages/AdminDashboard'; // IMPORTED
+import AdminDashboard from './pages/AdminDashboard'; 
 import Blog from './pages/Blog';
 import About from './pages/About';
 import Contact from './pages/Contact';
@@ -19,9 +18,12 @@ import News from './pages/News';
 import VendorShop from './pages/VendorShop';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import CourseClassroom from './pages/CourseClassroom';
 import { MessageSquare, X } from 'lucide-react';
 import { generateAIResponse } from './services/geminiService';
 import { UserProvider, useUser } from './contexts/UserContext';
+import { DataProvider } from './contexts/DataContext'; 
+import { LanguageProvider } from './contexts/LanguageContext';
 
 // Protected Route Component (Standard)
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -35,15 +37,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// ADMIN ROUTE COMPONENT (New)
+// ADMIN ROUTE COMPONENT
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useUser();
-  
-  // Must be logged in AND be Founder/Admin
   if (!user || (!user.isFounder && user.role !== 'admin')) {
     return <Navigate to="/" replace />;
   }
-
   return <>{children}</>;
 };
 
@@ -134,59 +133,66 @@ const AIChatWidget = () => {
 const App: React.FC = () => {
   return (
     <UserProvider>
-      <Router>
-        <Routes>
-          {/* Dedicated Admin Layout/Route (No standard Layout wrapper) */}
-          <Route path="/admin" element={
-            <AdminRoute>
-              <AdminDashboard />
-            </AdminRoute>
-          } />
+      <DataProvider> 
+        <LanguageProvider>
+          <Router>
+            <Routes>
+              {/* Dedicated Admin Layout/Route */}
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } />
 
-          {/* Standard Layout Routes */}
-          <Route path="*" element={
-            <Layout>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Home />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/youtube" element={<YouTubePage />} />
-                
-                {/* Auth Routes */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                
-                {/* Landing Pages */}
-                <Route path="/product/:id" element={<ProductLanding />} />
-                <Route path="/courses/:id" element={<ProductLanding />} />
-                <Route path="/shop/:id" element={<VendorShop />} />
-                
-                {/* Legal Pages */}
-                <Route path="/privacy" element={<LegalPage type="privacy" />} />
-                <Route path="/terms" element={<LegalPage type="terms" />} />
-                <Route path="/legal" element={<LegalPage type="legal" />} />
-                <Route path="/refund" element={<LegalPage type="refund" />} />
+              {/* Standard Layout Routes */}
+              <Route path="*" element={
+                <Layout>
+                  <Routes>
+                    {/* Public Routes */}
+                    <Route path="/" element={<Home />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/youtube" element={<YouTubePage />} />
+                    
+                    {/* Auth Routes */}
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    
+                    {/* Landing Pages */}
+                    <Route path="/product/:id" element={<ProductLanding />} />
+                    <Route path="/courses/:id" element={<ProductLanding />} />
+                    <Route path="/shop/:id" element={<VendorShop />} />
+                    
+                    {/* Legal Pages */}
+                    <Route path="/privacy" element={<LegalPage type="privacy" />} />
+                    <Route path="/terms" element={<LegalPage type="terms" />} />
+                    <Route path="/legal" element={<LegalPage type="legal" />} />
+                    <Route path="/refund" element={<LegalPage type="refund" />} />
 
-                {/* Public Access */}
-                <Route path="/news" element={<News />} />
-                <Route path="/community" element={<Community />} />
-                <Route path="/live" element={<LiveStream />} />
-                <Route path="/courses" element={<Marketplace />} />
-                <Route path="/marketplace" element={<Marketplace />} />
+                    {/* Public Access */}
+                    <Route path="/news" element={<News />} />
+                    <Route path="/community" element={<Community />} />
+                    <Route path="/live" element={<LiveStream />} />
+                    <Route path="/courses" element={<Marketplace />} />
+                    <Route path="/marketplace" element={<Marketplace />} />
 
-                {/* Protected Routes */}
-                <Route path="/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
-                <Route path="/creator-studio" element={<ProtectedRoute><CreatorStudio /></ProtectedRoute>} />
+                    {/* Protected Routes */}
+                    <Route path="/dashboard" element={<ProtectedRoute><StudentDashboard /></ProtectedRoute>} />
+                    <Route path="/creator-studio" element={<ProtectedRoute><CreatorStudio /></ProtectedRoute>} />
+                    
+                    {/* NEW: CLASSROOM ROUTE */}
+                    <Route path="/classroom/:courseId" element={<ProtectedRoute><CourseClassroom /></ProtectedRoute>} />
 
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </Layout>
-          } />
-        </Routes>
-        <AIChatWidget />
-      </Router>
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </Layout>
+              } />
+            </Routes>
+            <AIChatWidget />
+          </Router>
+        </LanguageProvider>
+      </DataProvider>
     </UserProvider>
   );
 };

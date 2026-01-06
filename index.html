@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="fr">
   <head>
@@ -5,42 +6,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>KADJOLO BASILE | Excellence & Leadership</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
         theme: {
           extend: {
             colors: {
               brand: {
-                black: '#000000', // Deep Black
-                blue: '#2563eb', // Primary Blue (Blue 600)
-                green: '#16a34a', // Accent Green (Green 600)
-                white: '#ffffff', // Pure White
-                gray: '#f8fafc', // Very light gray for backgrounds
+                black: '#000000', 
+                blue: '#2563eb', // Retour au bleu original (Blue 600)
+                green: '#16a34a',
+                white: '#ffffff',
+                gray: '#f8fafc',
               }
             },
             fontFamily: {
               sans: ['Inter', 'sans-serif'],
               serif: ['Playfair Display', 'serif'],
+            },
+            keyframes: {
+              'glow-pulse': {
+                '0%, 100%': { boxShadow: '0 0 15px rgba(37, 99, 235, 0.4)', transform: 'scale(1)' },
+                '50%': { boxShadow: '0 0 30px rgba(37, 99, 235, 0.6)', transform: 'scale(1.05)' },
+              },
+              'shimmer': {
+                '0%': { backgroundPosition: '-200% 0' },
+                '100%': { backgroundPosition: '200% 0' },
+              },
+              'float': {
+                '0%, 100%': { transform: 'translateY(0px)' },
+                '50%': { transform: 'translateY(-10px)' },
+              }
+            },
+            animation: {
+              'glow-pulse': 'glow-pulse 3s infinite ease-in-out',
+              'shimmer': 'shimmer 3s infinite linear',
+              'float': 'float 6s infinite ease-in-out',
             }
           }
         }
       }
     </script>
     <style>
-      /* Custom Scrollbar */
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #f1f1f1; 
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #94a3b8; 
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #64748b; 
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #f1f1f1; }
+      ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+      
+      .bg-shimmer {
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        background-size: 200% 100%;
       }
     </style>
   <script type="importmap">

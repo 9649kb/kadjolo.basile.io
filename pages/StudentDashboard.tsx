@@ -1,271 +1,294 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   BookOpen, Clock, Award, Shield, Lock, CreditCard, 
   PlayCircle, CheckCircle, Bell, Settings, LogOut, FileText,
-  Download, ChevronRight, AlertCircle, Eye, EyeOff
+  Download, ChevronRight, AlertCircle, Eye, EyeOff, TrendingUp,
+  Search, Filter, Play, ArrowRight
 } from 'lucide-react';
 import { useUser } from '../contexts/UserContext';
-import { courses, salesHistory } from '../services/mockData';
-import { Link } from 'react-router-dom';
+import { useData } from '../contexts/DataContext';
+import { Link, useNavigate } from 'react-router-dom';
 
 const StudentDashboard: React.FC = () => {
   const { user, logout } = useUser();
+  const { getStudentCourses } = useData();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'courses' | 'achievements' | 'billing' | 'security'>('courses');
-  
-  // Mock Enrollments (Filter courses "purchased" by this user logic)
-  const myCourses = courses.slice(0, 3).map((c, i) => ({
-    ...c,
-    progress: i === 0 ? 75 : (i === 1 ? 30 : 0),
-    lastAccessed: i === 0 ? 'Il y a 2 heures' : 'Il y a 3 jours'
-  }));
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Security State
-  const [showPassword, setShowPassword] = useState(false);
-  const [twoFactor, setTwoFactor] = useState(user?.twoFactorEnabled || false);
+  // Récupération des cours avec progression réelle calculée automatiquement
+  const myCourses = useMemo(() => {
+    if (!user) return [];
+    return getStudentCourses(user.id).filter(c => 
+      c.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [user, getStudentCourses, searchQuery]);
 
-  const SecurityTab = () => (
-    <div className="space-y-6 animate-in fade-in">
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-        <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-          <Shield className="text-brand-blue" /> Sécurité du Compte
-        </h3>
-        
-        <div className="space-y-6">
-          {/* Password Change */}
-          <div className="pb-6 border-b border-gray-100">
-            <h4 className="text-sm font-bold text-gray-700 mb-3">Mot de passe</h4>
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="relative">
-                <input 
-                  type={showPassword ? "text" : "password"} 
-                  value="fakepassword123" 
-                  readOnly 
-                  className="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm text-gray-500"
-                />
-                <button 
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-              <button className="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-gray-50 transition-colors">
-                Changer le mot de passe
-              </button>
-            </div>
-            <p className="text-xs text-gray-400 mt-2 flex items-center gap-1">
-              <CheckCircle size={12} className="text-green-500" /> Dernière modification il y a 30 jours
-            </p>
-          </div>
+  // Statistiques calculées
+  const stats = useMemo(() => {
+    const total = myCourses.length;
+    const completed = myCourses.filter(c => c.progress === 100).length;
+    const inProgress = total - completed;
+    return { total, completed, inProgress };
+  }, [myCourses]);
 
-          {/* 2FA */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h4 className="text-sm font-bold text-gray-700">Authentification à deux facteurs (2FA)</h4>
-              <p className="text-xs text-gray-500 mt-1">Ajoute une couche de sécurité supplémentaire à votre compte.</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" checked={twoFactor} onChange={() => setTwoFactor(!twoFactor)} className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-green"></div>
-            </label>
-          </div>
-
-          {/* Login Activity */}
-          <div>
-            <h4 className="text-sm font-bold text-gray-700 mb-3">Appareils connectés</h4>
-            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="bg-white p-2 rounded-lg shadow-sm">
-                  <Shield size={20} className="text-brand-blue" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-brand-black">Chrome sur Windows (Cet appareil)</p>
-                  <p className="text-xs text-blue-600">Lomé, Togo • Actif maintenant</p>
-                </div>
-              </div>
-              <div className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-bold">Sécurisé</div>
-            </div>
-          </div>
-        </div>
+  if (!user) {
+    return (
+      <div className="h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <Lock size={48} className="text-gray-300" />
+        <h2 className="text-xl font-bold">Accès réservé aux membres</h2>
+        <Link to="/login" className="bg-brand-blue text-white px-8 py-3 rounded-xl font-bold">Se connecter</Link>
       </div>
-    </div>
-  );
-
-  const MyCoursesTab = () => (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in">
-      {myCourses.map(course => (
-        <div key={course.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow group">
-          <div className="relative h-40 overflow-hidden">
-            <img src={course.image} alt={course.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <Link to={`/product/${course.id}`} className="bg-white text-black rounded-full p-3 shadow-lg transform hover:scale-110 transition-transform">
-                <PlayCircle size={32} />
-              </Link>
-            </div>
-            <div className="absolute bottom-2 right-2 bg-black/60 backdrop-blur text-white text-xs px-2 py-1 rounded font-bold">
-              {course.category}
-            </div>
-          </div>
-          <div className="p-5">
-            <h3 className="font-bold text-gray-900 mb-2 line-clamp-1">{course.title}</h3>
-            
-            <div className="mb-4">
-              <div className="flex justify-between text-xs mb-1">
-                <span className="font-bold text-gray-500">{course.progress}% complété</span>
-                <span className="text-brand-blue">{course.progress === 100 ? 'Terminé' : 'En cours'}</span>
-              </div>
-              <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div className="h-full bg-brand-blue rounded-full transition-all duration-1000" style={{width: `${course.progress}%`}}></div>
-              </div>
-            </div>
-
-            <Link 
-              to={`/product/${course.id}`} 
-              className="block w-full py-2.5 text-center bg-gray-50 hover:bg-brand-black hover:text-white text-gray-900 font-bold rounded-xl text-sm transition-colors"
-            >
-              {course.progress > 0 ? 'Continuer' : 'Commencer'}
-            </Link>
-          </div>
-        </div>
-      ))}
-      
-      {/* Add New Course Placeholder */}
-      <Link to="/courses" className="border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center p-6 text-gray-400 hover:border-brand-blue hover:text-brand-blue transition-colors bg-gray-50/50">
-        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center mb-3 shadow-sm">
-          <BookOpen size={24} />
-        </div>
-        <span className="font-bold text-sm">Découvrir d'autres formations</span>
-      </Link>
-    </div>
-  );
-
-  const BillingTab = () => (
-    <div className="space-y-6 animate-in fade-in">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-100">
-          <h3 className="text-lg font-bold text-gray-900">Historique des achats</h3>
-        </div>
-        <table className="w-full text-left">
-          <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-bold">
-            <tr>
-              <th className="p-4">Date</th>
-              <th className="p-4">Formation</th>
-              <th className="p-4">Montant</th>
-              <th className="p-4">Facture</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 text-sm">
-            {[1, 2, 3].map(i => (
-              <tr key={i} className="hover:bg-gray-50">
-                <td className="p-4 text-gray-500">12 Oct 2023</td>
-                <td className="p-4 font-bold text-gray-900">Formation Business Pro - Module {i}</td>
-                <td className="p-4 font-bold text-gray-900">25,000 F</td>
-                <td className="p-4">
-                  <button className="flex items-center gap-1 text-brand-blue hover:underline font-medium">
-                    <Download size={14} /> PDF
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-
-  if (!user) return null;
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      {/* Secure Header */}
-      <div className="bg-brand-black text-white pt-12 pb-24 px-4 md:px-8 relative overflow-hidden">
-        <div className="max-w-7xl mx-auto relative z-10 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-6">
-            <div className="relative">
-              <img src={user.avatar} alt={user.name} className="w-20 h-20 rounded-full border-4 border-gray-800 shadow-xl" />
-              <div className="absolute bottom-0 right-0 w-6 h-6 bg-green-500 border-4 border-brand-black rounded-full" title="Compte Sécurisé"></div>
-            </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-serif font-bold">Espace Membre</h1>
-              <p className="text-gray-400 flex items-center gap-2 text-sm mt-1">
-                <Shield size={14} className="text-green-500" /> Compte sécurisé • {user.name}
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-3">
-             <Link to="/courses" className="px-5 py-2.5 bg-white/10 hover:bg-white/20 rounded-xl font-bold text-sm transition-colors border border-white/10 backdrop-blur">
-               Parcourir le catalogue
-             </Link>
-             <button onClick={logout} className="px-5 py-2.5 bg-red-600/90 hover:bg-red-600 rounded-xl font-bold text-sm transition-colors shadow-lg flex items-center gap-2">
-               <LogOut size={16} /> Déconnexion
-             </button>
-          </div>
-        </div>
-        
-        {/* Abstract Pattern */}
-        <div className="absolute top-0 right-0 w-1/3 h-full bg-gradient-to-l from-blue-900/30 to-transparent"></div>
-      </div>
+    <div className="min-h-screen bg-brand-gray pb-20">
+      {/* HEADER PREMIUM & STATS */}
+      <div className="bg-brand-black text-white relative overflow-hidden rounded-b-[40px] shadow-2xl">
+        {/* Background Decorative elements */}
+        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-brand-blue/20 to-transparent"></div>
+        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-brand-blue/10 rounded-full blur-3xl"></div>
 
-      {/* Main Content Area (Overlapping Header) */}
-      <div className="max-w-7xl mx-auto px-4 md:px-8 -mt-12 relative z-20">
-        <div className="flex flex-col lg:flex-row gap-8">
-          
-          {/* Sidebar Menu */}
-          <div className="w-full lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden sticky top-24">
-              <nav className="p-2 space-y-1">
-                <button 
-                  onClick={() => setActiveTab('courses')}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'courses' ? 'bg-brand-blue text-white shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  <div className="flex items-center gap-3"><BookOpen size={18}/> Mes Formations</div>
-                  {activeTab === 'courses' && <ChevronRight size={16}/>}
-                </button>
-                <button 
-                  onClick={() => setActiveTab('achievements')}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'achievements' ? 'bg-brand-blue text-white shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  <div className="flex items-center gap-3"><Award size={18}/> Certificats</div>
-                  {activeTab === 'achievements' && <ChevronRight size={16}/>}
-                </button>
-                <button 
-                  onClick={() => setActiveTab('billing')}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'billing' ? 'bg-brand-blue text-white shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  <div className="flex items-center gap-3"><CreditCard size={18}/> Facturation</div>
-                  {activeTab === 'billing' && <ChevronRight size={16}/>}
-                </button>
-                <div className="h-px bg-gray-100 my-2"></div>
-                <button 
-                  onClick={() => setActiveTab('security')}
-                  className={`w-full flex items-center justify-between p-3 rounded-xl text-sm font-bold transition-all ${activeTab === 'security' ? 'bg-brand-black text-white shadow-md' : 'text-gray-600 hover:bg-gray-50'}`}
-                >
-                  <div className="flex items-center gap-3"><Lock size={18}/> Sécurité</div>
-                  {activeTab === 'security' && <ChevronRight size={16}/>}
-                </button>
-              </nav>
-            </div>
-          </div>
-
-          {/* Content Panel */}
-          <div className="flex-1">
-             {activeTab === 'courses' && <MyCoursesTab />}
-             {activeTab === 'billing' && <BillingTab />}
-             {activeTab === 'security' && <SecurityTab />}
-             {activeTab === 'achievements' && (
-                <div className="bg-white p-12 rounded-2xl border border-gray-100 text-center shadow-sm">
-                   <div className="w-20 h-20 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Award size={40} />
-                   </div>
-                   <h3 className="text-xl font-bold text-gray-900">Vos certificats</h3>
-                   <p className="text-gray-500 mt-2">Terminez une formation à 100% pour débloquer votre certificat officiel KADJOLO.</p>
+        <div className="max-w-7xl mx-auto px-6 pt-12 pb-24 relative z-10">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+            <div className="flex items-center gap-6">
+              <div className="relative group">
+                <img 
+                  src={user.avatar} 
+                  className="w-24 h-24 rounded-3xl object-cover border-4 border-white/10 shadow-2xl group-hover:scale-105 transition-transform" 
+                  alt={user.name} 
+                />
+                <div className="absolute -bottom-2 -right-2 bg-green-500 p-1.5 rounded-xl border-4 border-brand-black shadow-lg">
+                  <Shield size={14} className="text-white" />
                 </div>
-             )}
-          </div>
+              </div>
+              <div className="text-center md:text-left">
+                <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic">Mon Espace Élite</h1>
+                <p className="text-blue-200/70 font-medium flex items-center justify-center md:justify-start gap-2 mt-1">
+                  Ravi de vous revoir, <span className="text-white font-bold">{user.name}</span>
+                </p>
+              </div>
+            </div>
 
+            {/* Statistiques Dynamiques */}
+            <div className="grid grid-cols-3 gap-4 md:gap-8">
+              <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-center min-w-[100px]">
+                <p className="text-2xl font-black text-white">{stats.total}</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Cours</p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-center min-w-[100px]">
+                <p className="text-2xl font-black text-green-400">{stats.completed}</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Finis</p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-md p-4 rounded-2xl border border-white/10 text-center min-w-[100px]">
+                <p className="text-2xl font-black text-brand-blue">{stats.inProgress}</p>
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">En cours</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* NAVIGATION & FILTERS BAR */}
+      <div className="max-w-7xl mx-auto px-6 -mt-10 relative z-20">
+        <div className="bg-white p-4 rounded-[32px] shadow-xl border border-gray-100 flex flex-col lg:flex-row justify-between items-center gap-6">
+          <nav className="flex gap-2 p-1 bg-brand-gray rounded-2xl w-full lg:w-auto overflow-x-auto no-scrollbar">
+            {[
+              { id: 'courses', label: 'Mes Formations', icon: <BookOpen size={18}/> },
+              { id: 'achievements', label: 'Certificats', icon: <Award size={18}/> },
+              { id: 'billing', label: 'Factures', icon: <FileText size={18}/> },
+              { id: 'security', label: 'Sécurité', icon: <Shield size={18}/> }
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all whitespace-nowrap ${
+                  activeTab === tab.id 
+                  ? 'bg-brand-black text-white shadow-lg' 
+                  : 'text-gray-500 hover:bg-gray-200'
+                }`}
+              >
+                {tab.icon} {tab.label}
+              </button>
+            ))}
+          </nav>
+
+          <div className="relative w-full lg:w-80">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+            <input 
+              type="text" 
+              placeholder="Rechercher dans mes cours..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-12 pr-6 py-3 bg-brand-gray border-none rounded-2xl outline-none text-sm font-bold placeholder:text-gray-400 focus:ring-2 focus:ring-brand-blue/20 transition-all"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* CONTENT GRID */}
+      <main className="max-w-7xl mx-auto px-6 mt-12">
+        {activeTab === 'courses' && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {myCourses.length > 0 ? (
+              myCourses.map(course => (
+                <div key={course.id} className="group bg-white rounded-[32px] overflow-hidden shadow-sm hover:shadow-2xl border border-gray-100 transition-all duration-500 flex flex-col hover:-translate-y-2">
+                  <div className="relative h-48 overflow-hidden">
+                    <img 
+                      src={course.image} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
+                      alt={course.title} 
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <Link to={`/classroom/${course.id}`} className="bg-white text-brand-black p-4 rounded-2xl shadow-2xl transform scale-75 group-hover:scale-100 transition-transform duration-300">
+                         <Play fill="currentColor" size={24} />
+                       </Link>
+                    </div>
+                    <div className="absolute top-4 left-4 bg-brand-black/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1.5 rounded-full uppercase tracking-widest border border-white/10">
+                      {course.category}
+                    </div>
+                    {course.progress === 100 && (
+                      <div className="absolute top-4 right-4 bg-green-500 text-white p-1.5 rounded-full shadow-lg border-2 border-white animate-bounce">
+                        <CheckCircle size={14} />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="p-8 flex-1 flex flex-col">
+                    <div className="flex-1">
+                      <h3 className="text-xl font-black text-brand-black mb-4 leading-tight group-hover:text-brand-blue transition-colors line-clamp-2">
+                        {course.title}
+                      </h3>
+                      
+                      {/* Barre de progression automatique */}
+                      <div className="mb-6 bg-gray-100 h-3 rounded-full overflow-hidden relative border border-gray-50">
+                        <div 
+                          className={`h-full transition-all duration-1000 ease-out ${course.progress === 100 ? 'bg-green-500' : 'bg-brand-blue'}`}
+                          style={{ width: `${course.progress}%` }}
+                        ></div>
+                      </div>
+                      
+                      <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-gray-400 mb-6">
+                        <span className={course.progress > 0 ? 'text-brand-blue' : ''}>
+                          {course.progress}% complété
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock size={12} /> {course.progress === 100 ? 'Terminé' : 'En cours'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <button 
+                      onClick={() => navigate(`/classroom/${course.id}`)}
+                      className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 ${
+                        course.progress === 100 
+                        ? 'bg-green-50 border-green-500 text-green-600 hover:bg-green-500 hover:text-white' 
+                        : 'bg-brand-black border-brand-black text-white hover:bg-white hover:text-brand-black'
+                      }`}
+                    >
+                      {course.progress === 100 ? 'Revoir la formation' : course.progress > 0 ? 'Reprendre le cours' : 'Démarrer maintenant'}
+                      <ArrowRight size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full py-20 text-center bg-white rounded-[40px] border-2 border-dashed border-gray-200">
+                <div className="w-20 h-20 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <BookOpen size={40} />
+                </div>
+                <h3 className="text-2xl font-black text-gray-900 mb-2">Aucune formation trouvée</h3>
+                <p className="text-gray-500 mb-8 max-w-sm mx-auto">Propulsez votre carrière avec nos programmes d'excellence.</p>
+                <Link to="/courses" className="bg-brand-blue text-white px-10 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-600/20 hover:scale-105 transition-transform inline-block">
+                  Explorer le catalogue
+                </Link>
+              </div>
+            )}
+
+            {/* Carte Suggestion - Automatiquement ajoutée si l'utilisateur a peu de cours */}
+            {myCourses.length > 0 && myCourses.length < 6 && (
+              <Link to="/courses" className="group bg-brand-gray rounded-[32px] border-2 border-dashed border-gray-300 flex flex-col items-center justify-center p-8 text-center hover:border-brand-blue transition-colors min-h-[400px]">
+                <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-sm group-hover:bg-brand-blue group-hover:text-white transition-all">
+                  <TrendingUp size={32} />
+                </div>
+                <p className="text-lg font-black text-gray-500 group-hover:text-brand-blue transition-colors">Débloquer de nouvelles compétences</p>
+                <p className="text-xs text-gray-400 mt-2 font-bold uppercase tracking-wider">Voir les nouveautés →</p>
+              </Link>
+            )}
+          </div>
+        )}
+
+        {/* --- AUTRES ONGLETS (STRUCTURELS) --- */}
+        {activeTab === 'achievements' && (
+          <div className="animate-in fade-in slide-in-from-top-4 duration-500 max-w-4xl mx-auto">
+             <div className="bg-white p-12 rounded-[40px] text-center border border-gray-100 shadow-sm">
+                <div className="w-24 h-24 bg-yellow-50 text-yellow-500 rounded-[32px] flex items-center justify-center mx-auto mb-8 shadow-inner">
+                   <Award size={48} />
+                </div>
+                <h2 className="text-3xl font-black text-brand-black mb-4">Vos Certificats d'Excellence</h2>
+                <p className="text-gray-500 mb-10 max-w-md mx-auto">Chaque formation terminée avec succès vous donne droit à un certificat officiel signé par KADJOLO BASILE.</p>
+                
+                <div className="grid gap-4">
+                   {myCourses.filter(c => c.progress === 100).length > 0 ? (
+                     myCourses.filter(c => c.progress === 100).map(c => (
+                        <div key={c.id} className="flex items-center justify-between p-6 bg-brand-gray rounded-2xl border border-gray-100">
+                           <div className="flex items-center gap-4">
+                              <CheckCircle className="text-green-500" />
+                              <span className="font-bold text-gray-800">{c.title}</span>
+                           </div>
+                           <button className="flex items-center gap-2 bg-brand-black text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-800">
+                             <Download size={14} /> Télécharger
+                           </button>
+                        </div>
+                     ))
+                   ) : (
+                     <div className="p-8 bg-brand-gray rounded-3xl border border-dashed border-gray-200 text-gray-400 font-bold uppercase tracking-widest text-xs">
+                        Aucun certificat débloqué pour le moment.
+                     </div>
+                   )}
+                </div>
+             </div>
+          </div>
+        )}
+
+        {activeTab === 'security' && (
+          <div className="max-w-2xl mx-auto animate-in fade-in slide-in-from-right-4 duration-500">
+             <div className="bg-white p-10 rounded-[40px] border border-gray-100 shadow-sm space-y-10">
+                <div>
+                   <h3 className="text-xl font-black text-brand-black mb-6 uppercase tracking-tight flex items-center gap-3">
+                     <Lock className="text-brand-blue" /> Paramètres de sécurité
+                   </h3>
+                   <div className="space-y-4">
+                      <div className="bg-brand-gray p-6 rounded-2xl border border-gray-100 flex justify-between items-center">
+                         <div>
+                            <p className="font-black text-sm text-gray-900 uppercase tracking-tight">Mot de passe</p>
+                            <p className="text-xs text-gray-500">Dernière modification il y a 3 mois</p>
+                         </div>
+                         <button className="text-[10px] font-black text-brand-blue uppercase tracking-widest border-b-2 border-brand-blue">Modifier</button>
+                      </div>
+                      <div className="bg-brand-gray p-6 rounded-2xl border border-gray-100 flex justify-between items-center">
+                         <div>
+                            <p className="font-black text-sm text-gray-900 uppercase tracking-tight">Double Authentification (2FA)</p>
+                            <p className="text-xs text-gray-400">Recommandé pour protéger vos achats</p>
+                         </div>
+                         <div className="w-12 h-6 bg-gray-200 rounded-full relative cursor-pointer">
+                            <div className="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+
+                <div className="pt-10 border-t border-gray-100">
+                   <button onClick={logout} className="w-full py-5 bg-red-50 text-red-600 rounded-2xl font-black text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-red-600 hover:text-white transition-all">
+                      <LogOut size={18} /> Déconnexion sécurisée
+                   </button>
+                </div>
+             </div>
+          </div>
+        )}
+      </main>
     </div>
   );
 };

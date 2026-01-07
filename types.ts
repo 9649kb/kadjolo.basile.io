@@ -14,6 +14,15 @@ export interface User {
   twoFactorEnabled?: boolean; 
 }
 
+export interface Lead {
+  id: string;
+  email: string;
+  source: string;
+  status: 'new' | 'contacted' | 'converted' | 'lost';
+  score: number; // 0-100
+  joinedAt: string;
+}
+
 export type AdminPermission = 
   | 'manage_users'     
   | 'manage_finance'   
@@ -54,8 +63,8 @@ export interface AppNotification {
   link?: string;
 }
 
-export type AutomationTrigger = 'sale_created' | 'course_completed' | 'cart_abandoned' | 'new_lead';
-export type AutomationAction = 'send_email' | 'add_tag' | 'send_coupon' | 'grant_access' | 'issue_certificate';
+export type AutomationTrigger = 'sale_created' | 'course_completed' | 'new_subscription' | 'lead_captured';
+export type AutomationAction = 'send_email' | 'add_tag' | 'send_coupon' | 'notify_admin';
 
 export interface WorkflowRule {
   id: string;
@@ -447,6 +456,7 @@ export interface Coupon {
   discountType: 'percentage' | 'fixed';
   discountValue: number;
   isActive: boolean;
+  minPurchaseAmount?: number;
 }
 
 export interface Popup {
@@ -461,6 +471,8 @@ export interface Popup {
   isActive: boolean;
   backgroundColor: string;
   textColor: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface Banner {
@@ -474,6 +486,8 @@ export interface Banner {
   textColor: string;
   startDate?: string;
   endDate?: string;
+  openInNewTab?: boolean; // Nouvelle fonctionnalité
+  autoTrack?: boolean; // Nouvelle fonctionnalité
   targetSpecificProducts?: boolean;
   selectedProductIds?: string[];
   hasDisplayDelay?: boolean;
@@ -495,12 +509,19 @@ export interface Campaign {
   id: string;
   name: string;
   source: string;
+  medium?: string;
+  term?: string;
+  content?: string;
   trackingLink: string;
   isActive: boolean;
+  isArchived?: boolean;
   clicks: number;
   sales: number;
   revenue: number;
+  budget?: number;
+  targetSales?: number;
   createdAt: string;
+  description?: string;
 }
 
 export interface YouTubeVideo {

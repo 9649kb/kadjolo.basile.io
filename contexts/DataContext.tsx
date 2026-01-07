@@ -1,7 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Course, Sale, Post, User, Module, ContactMessage, Testimonial, AppNotification, VendorProfile, PayoutRequest, Review, Coupon } from '../types';
-import { courses as initialCourses, posts as initialPosts, salesHistory as initialSales, testimonials as initialTestimonials, vendorProfiles, payoutRequests as initialPayouts } from '../services/mockData';
+import { Course, Sale, Post, User, Module, ContactMessage, Testimonial, AppNotification, VendorProfile, PayoutRequest, Review, Coupon, Popup, Banner } from '../types';
+import { courses as initialCourses, posts as initialPosts, salesHistory as initialSales, testimonials as initialTestimonials, vendorProfiles, payoutRequests as initialPayouts, mockBanners } from '../services/mockData';
 import { notifyUserSupportReply, notifyAdminPayoutRequest } from '../services/notificationService';
 
 interface Enrollment {
@@ -23,6 +23,8 @@ export interface EnhancedCoupon extends Coupon {
   isScheduled: boolean;
   startDate?: string;
   endDate?: string;
+  minPurchaseAmount?: number;
+  oncePerCustomer: boolean;
 }
 
 interface DataContextType {
@@ -35,6 +37,8 @@ interface DataContextType {
   notifications: AppNotification[];
   payouts: PayoutRequest[];
   coupons: EnhancedCoupon[];
+  popups: Popup[];
+  banners: Banner[];
   addCourse: (course: Course) => void;
   updateCourse: (course: Course) => void;
   deleteCourse: (id: string) => void;
@@ -58,8 +62,17 @@ interface DataContextType {
   requestPayout: (vendorId: string, vendorName: string, amount: number, method: any, details: string) => void;
   addReviewReply: (courseId: string, reviewId: string, replyText: string) => void;
   addCoupon: (coupon: EnhancedCoupon) => void;
+  updateCoupon: (coupon: EnhancedCoupon) => void;
   deleteCoupon: (id: string) => void;
   toggleCouponStatus: (id: string) => void;
+  addPopup: (popup: Popup) => void;
+  updatePopup: (popup: Popup) => void;
+  deletePopup: (id: string) => void;
+  togglePopupStatus: (id: string) => void;
+  addBanner: (banner: Banner) => void;
+  updateBanner: (banner: Banner) => void;
+  deleteBanner: (id: string) => void;
+  toggleBannerStatus: (id: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -110,6 +123,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [popups, setPopups] = useState<Popup[]>(() => {
+    const saved = localStorage.getItem('kadjolo_db_popups');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [banners, setBanners] = useState<Banner[]>(() => {
+    const saved = localStorage.getItem('kadjolo_db_banners');
+    return saved ? JSON.parse(saved) : mockBanners;
+  });
+
   useEffect(() => localStorage.setItem('kadjolo_db_courses', JSON.stringify(courses)), [courses]);
   useEffect(() => localStorage.setItem('kadjolo_db_posts', JSON.stringify(posts)), [posts]);
   useEffect(() => localStorage.setItem('kadjolo_db_sales', JSON.stringify(sales)), [sales]);
@@ -119,6 +142,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => localStorage.setItem('kadjolo_db_notifications', JSON.stringify(notifications)), [notifications]);
   useEffect(() => localStorage.setItem('kadjolo_db_payouts', JSON.stringify(payouts)), [payouts]);
   useEffect(() => localStorage.setItem('kadjolo_db_coupons', JSON.stringify(coupons)), [coupons]);
+  useEffect(() => localStorage.setItem('kadjolo_db_popups', JSON.stringify(popups)), [popups]);
+  useEffect(() => localStorage.setItem('kadjolo_db_banners', JSON.stringify(banners)), [banners]);
 
   const addCourse = (course: Course) => setCourses(prev => [course, ...prev]);
   const updateCourse = (updatedCourse: Course) => setCourses(prev => prev.map(c => c.id === updatedCourse.id ? updatedCourse : c));
@@ -286,17 +311,30 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addCoupon = (coupon: EnhancedCoupon) => setCoupons(prev => [coupon, ...prev]);
+  const updateCoupon = (coupon: EnhancedCoupon) => setCoupons(prev => prev.map(c => c.id === coupon.id ? coupon : c));
   const deleteCoupon = (id: string) => setCoupons(prev => prev.filter(c => c.id !== id));
   const toggleCouponStatus = (id: string) => setCoupons(prev => prev.map(c => c.id === id ? { ...c, isActive: !c.isActive } : c));
 
+  const addPopup = (popup: Popup) => setPopups(prev => [popup, ...prev]);
+  const updatePopup = (popup: Popup) => setPopups(prev => prev.map(p => p.id === popup.id ? popup : p));
+  const deletePopup = (id: string) => setPopups(prev => prev.filter(p => p.id !== id));
+  const togglePopupStatus = (id: string) => setPopups(prev => prev.map(p => p.id === id ? { ...p, isActive: !p.isActive } : p));
+
+  const addBanner = (banner: Banner) => setBanners(prev => [banner, ...prev]);
+  const updateBanner = (banner: Banner) => setBanners(prev => prev.map(b => b.id === banner.id ? banner : b));
+  const deleteBanner = (id: string) => setBanners(prev => prev.filter(b => b.id !== id));
+  const toggleBannerStatus = (id: string) => setBanners(prev => prev.map(b => b.id === id ? { ...b, isActive: !b.isActive } : b));
+
   return (
     <DataContext.Provider value={{
-      courses, posts, sales, enrollments, messages, testimonials, notifications, payouts, coupons,
+      courses, posts, sales, enrollments, messages, testimonials, notifications, payouts, coupons, popups, banners,
       addCourse, updateCourse, deleteCourse, addPost, updatePost, deletePost, togglePinPost, completePurchase,
       enrollUser, markLessonComplete, getStudentCourses, getCourseProgress, isEnrolled,
       addMessage, markMessageRead, replyToMessage, addTestimonial, moderateTestimonial,
       addNotification, markNotificationRead, requestPayout, addReviewReply,
-      addCoupon, deleteCoupon, toggleCouponStatus
+      addCoupon, updateCoupon, deleteCoupon, toggleCouponStatus,
+      addPopup, updatePopup, deletePopup, togglePopupStatus,
+      addBanner, updateBanner, deleteBanner, toggleBannerStatus
     }}>
       {children}
     </DataContext.Provider>

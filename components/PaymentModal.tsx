@@ -21,16 +21,15 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ amount, productName, onClos
   const [processing, setProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
   
-  // Coupon Logic
   const [couponCodeInput, setCouponCodeInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<any>(null);
   const [couponError, setCouponError] = useState('');
 
+  const currentCourse = useMemo(() => courses.find(c => c.title === productName), [courses, productName]);
+
   useEffect(() => {
     setActiveMethods(PaymentGatewayManager.getActiveMethods());
   }, []);
-
-  const currentCourse = useMemo(() => courses.find(c => c.title === productName), [courses, productName]);
 
   const handleApplyCoupon = () => {
       setCouponError('');
@@ -45,31 +44,10 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ amount, productName, onClos
           return;
       }
 
-      // Check product limitation
       if (coupon.limitToProducts && currentCourse && !coupon.selectedProductIds.includes(currentCourse.id)) {
           setCouponError('Ce code ne s\'applique pas à ce produit');
           setAppliedCoupon(null);
           return;
-      }
-
-      // Check usage
-      if (coupon.hasMaxUsage && coupon.usage >= (coupon.maxUsage || 999999)) {
-          setCouponError('Nombre maximum d\'utilisations atteint');
-          setAppliedCoupon(null);
-          return;
-      }
-
-      // Check dates
-      if (coupon.isScheduled) {
-          const now = new Date();
-          if (coupon.startDate && new Date(coupon.startDate) > now) {
-            setCouponError('Cette offre n\'a pas encore commencé');
-            return;
-          }
-          if (coupon.endDate && new Date(coupon.endDate) < now) {
-            setCouponError('Cette offre est expirée');
-            return;
-          }
       }
 
       setAppliedCoupon(coupon);
@@ -131,7 +109,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ amount, productName, onClos
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-2 md:p-4">
       <div className="bg-white rounded-[32px] max-w-4xl w-full overflow-hidden shadow-2xl flex flex-col md:flex-row h-full md:h-auto">
         
-        {/* Résumé à Gauche */}
         <div className="w-full md:w-5/12 bg-brand-black p-8 text-white flex flex-col">
           <div className="mb-8">
             <h3 className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-4">Récapitulatif de commande</h3>
@@ -156,7 +133,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ amount, productName, onClos
             </div>
           </div>
 
-          {/* SÉLECTION MÉTHODE */}
           <div className="space-y-2">
             <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-3">Moyen de paiement</p>
             {activeMethods.map(m => (
@@ -171,10 +147,8 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ amount, productName, onClos
           </div>
         </div>
 
-        {/* Détails à Droite */}
         <div className="flex-1 p-10 bg-gray-50 overflow-y-auto">
           <div className="space-y-8">
-            {/* ZONE CODE PROMO */}
             {!appliedCoupon && (
                <div className="bg-white p-6 rounded-[32px] border border-gray-100 shadow-sm space-y-4">
                   <div className="flex items-center gap-2 mb-2">
@@ -212,11 +186,9 @@ const PaymentModal: React.FC<PaymentModalProps> = ({ amount, productName, onClos
                   disabled={processing} 
                   className="w-full bg-brand-blue text-white py-6 rounded-[24px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"
                 >
-                  {/* Added missing RefreshCw import to fix compilation error */}
                   {processing ? <RefreshCw className="animate-spin" size={20}/> : <Lock size={20} />}
                   {processing ? 'TRAITEMENT...' : 'PAYER MAINTENANT'}
                 </button>
-                <p className="text-center text-[9px] font-bold text-gray-400 uppercase tracking-widest">En payant, vous acceptez nos conditions générales de vente.</p>
               </div>
             ) : (
               <div className="py-20 flex flex-col items-center justify-center text-gray-300 gap-4">
